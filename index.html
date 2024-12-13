@@ -29,7 +29,6 @@
                 this.load.spritesheet('idle', 'images/idle.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('rocabrote', 'images/rocabrote.png', { frameWidth: 32, frameHeight: 50 });
                 this.load.image('background', 'images/background.jpg');
-                this.load.image('ground', 'images/ground.png');
             }
 
             create() {
@@ -51,16 +50,8 @@
                 
                 this.exclamation = exclamation;
 
-                const ground = this.physics.add.staticGroup();
-                const groundWidth = window.innerWidth;
-                const groundHeight = 32; 
-                for (let x = 0; x < groundWidth; x += groundHeight) {
-                    ground.create(x, window.innerHeight - groundHeight / 2, 'ground').setScale(2).refreshBody();
-                }
-
                 const main_character = this.physics.add.sprite(50, window.innerHeight, 'idle');
-                console.log(ground.height);
-                const rocabrote = this.physics.add.sprite(window.innerWidth - 500, window.innerHeight - ground.height, 'rocabrote');
+                const rocabrote = this.physics.add.sprite(window.innerWidth - 500, window.innerHeight, 'rocabrote');
              
 
                 const scaleFactor = window.innerHeight * 0.15 / main_character.height;
@@ -87,10 +78,6 @@
 
                 this.physics.add.overlap(this.main_character, this.rocabrote, this.showExclamation, null, this);
                 this.physics.add.overlap(this.main_character, this.rocabrote, this.hideExclamation, null, this);
-
-
-                this.physics.add.collider(this.main_character, ground);
-                this.physics.add.collider(this.rocabrote, ground);
             }
 
             showExclamation() {
