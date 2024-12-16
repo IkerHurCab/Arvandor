@@ -109,6 +109,9 @@
 
             const chatBox = this.add.rectangle(window.innerWidth * 0.5, window.innerHeight * 0.12, window.innerWidth * 0.9, window.innerHeight * 0.1, 0xffffff).setOrigin(0.5);
             chatBox.setStrokeStyle(2, 0x000000);
+            const rocabroteFace = this.add.image(chatBox.x - chatBox.width / 2 + 20, chatBox.y, 'rocabroteface').setOrigin(0.5);
+            const rocabroteFaceScaleFactor = (chatBox.height * 0.8) / rocabroteFace.height;
+            rocabroteFace.setScale(rocabroteFaceScaleFactor);
             const chatText = this.add.text(chatBox.x, chatBox.y, '', { fontSize: '16px', color: '#000000', wordWrap: { width: chatBox.width - 10 } }).setOrigin(0.5);
             const fullText = 'Hola, viajero. ¿Qué te trae por aquí?';
             let currentIndex = 0;
