@@ -3,6 +3,7 @@
 
 <head>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
+    <meta charset="UTF-8">
 </head>
 <style>
     * {
@@ -10,12 +11,15 @@
         padding: 0;
         box-sizing: border-box;
     }
-    html, body {
+
+    html,
+    body {
         width: 100%;
         height: 100%;
         overflow: hidden;
     }
 </style>
+
 <body>
 
     <script>
@@ -29,11 +33,20 @@
                 this.load.spritesheet('idle', 'images/idle.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('rocabrote', 'images/rocabrote.png', { frameWidth: 32, frameHeight: 50 });
                 this.load.image('background', 'images/background.jpg');
+                this.load.image('ground', 'images/ground.png');
             }
 
             create() {
                 this.add.image(0, 0, 'background').setOrigin(0, 0).setDisplaySize(window.innerWidth, window.innerHeight);
- 
+
+                this.platforms = this.physics.add.staticGroup();
+                const groundWidth = this.textures.get('ground').getSourceImage().width;
+                
+
+                for (let i = 0; i < 5; i++) { 
+                    this.platforms.create(i * 425, window.innerHeight - 32, 'ground').setScale(0.5).refreshBody();
+                }
+
                 this.anims.create({
                     key: 'rocabrote_anim',
                     frames: this.anims.generateFrameNumbers('rocabrote', { start: 0, end: -1 }),
@@ -46,45 +59,42 @@
                     frameRate: 4,
                     repeat: -1
                 });
+
                 const exclamation = this.add.sprite(0, 0, 'exclamation').setVisible(false);
-                
                 this.exclamation = exclamation;
 
-                const main_character = this.physics.add.sprite(50, window.innerHeight, 'idle');
-                const rocabrote = this.physics.add.sprite(window.innerWidth - 500, window.innerHeight, 'rocabrote');
-             
+                const main_character = this.physics.add.sprite(50, window.innerHeight - this.platforms.getChildren()[0].displayHeight, 'idle');
+                const rocabrote = this.physics.add.sprite(window.innerWidth - 500, window.innerHeight - this.platforms.getChildren()[0].displayHeight - 25, 'rocabrote');
 
                 const scaleFactor = window.innerHeight * 0.15 / main_character.height;
                 const scaleFactorRocabrote = window.innerHeight * 0.2 / rocabrote.height;
-                
                 const exclamationScaleFactor = window.innerHeight / exclamation.height;
+
                 main_character.setScale(scaleFactor);
                 rocabrote.setScale(scaleFactorRocabrote);
                 exclamation.setScale(exclamationScaleFactor / 17);
 
-
                 main_character.setCollideWorldBounds(true);
                 rocabrote.setCollideWorldBounds(true);
-                
+
                 rocabrote.play('rocabrote_anim');
                 main_character.play('idle_anim');
                 this.main_character = main_character;
                 this.rocabrote = rocabrote;
-               
+
                 main_character.setDepth(1);
-                rocabrote.setDepth(0);
 
                 this.cursors = this.input.keyboard.createCursorKeys();
 
                 this.physics.add.overlap(this.main_character, this.rocabrote, this.showExclamation, null, this);
-                this.physics.add.overlap(this.main_character, this.rocabrote, this.hideExclamation, null, this);
+                this.physics.add.collider(this.main_character, this.platforms);
+                this.physics.add.collider(this.rocabrote, this.platforms);
             }
 
             showExclamation() {
-                this.exclamation.setPosition(this.rocabrote.x, this.rocabrote.y - this.rocabrote.height - 10);
+                this.exclamation.setPosition(this.rocabrote.x, this.rocabrote.y - this.rocabrote.height * 1.7);
                 this.exclamation.setVisible(true);
                 this.action = true;
-
             }
 
             hideExclamation() {
@@ -94,11 +104,33 @@
                 }
             }
 
-            update() {
+            conversateWithRocabrote() {
+            
 
-                const speed = 400; 
+            const chatBox = this.add.rectangle(window.innerWidth * 0.5, window.innerHeight * 0.12, window.innerWidth * 0.9, window.innerHeight * 0.1, 0xffffff).setOrigin(0.5);
+            chatBox.setStrokeStyle(2, 0x000000);
+            const chatText = this.add.text(chatBox.x, chatBox.y, '', { fontSize: '16px', color: '#000000', wordWrap: { width: chatBox.width - 10 } }).setOrigin(0.5);
+            const fullText = 'Hola, viajero. ¿Qué te trae por aquí?';
+            let currentIndex = 0;
+
+            for (let i = 0; i < fullText.length; i++) {
+                this.time.addEvent({
+                    delay: 50 * i,
+                    callback: () => {
+                        chatText.text += fullText[i];
+                    }
+                });
+            }
+            // this.time.delayedCall(3000, () => {
+            //     chatBox.destroy();
+            //     chatText.destroy();
+            // }, [], this);
+            }
+
+            update() {
+                const speed = window.innerWidth * 0.22;
                 if (this.cursors.left.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) {
-                    this.main_character.setVelocityX(-speed); 
+                    this.main_character.setVelocityX(-speed);
                     this.main_character.flipX = true;
                 } else if (this.cursors.right.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D).isDown) {
                     this.main_character.setVelocityX(speed);
@@ -108,12 +140,12 @@
                 }
                 if (this.cursors.up.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE).isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown) {
                     this.main_character.setVelocityY(-speed);
-                } 
+                }
 
                 if (this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER).isDown && this.action) {
-                    this.rocabrote.destroy();
+                    this.conversateWithRocabrote();
                     this.exclamation.setVisible(false);
-                } 
+                }
                 this.hideExclamation();
             }
         }
@@ -126,7 +158,7 @@
             physics: {
                 default: 'arcade',
                 arcade: {
-                    gravity: { y: 500 }
+                    gravity: { y: 750 }
                 }
             },
             scale: {
