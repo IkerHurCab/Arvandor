@@ -2,6 +2,7 @@
 <html>
 
 <head>
+    <title>Arvandor</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
     <meta charset="UTF-8">
 </head>
@@ -34,6 +35,7 @@
                 this.load.spritesheet('rocabrote', 'images/rocabrote.png', { frameWidth: 32, frameHeight: 50 });
                 this.load.image('background', 'images/background.jpg');
                 this.load.image('ground', 'images/ground.png');
+                this.load.image('rocabroteface', 'images/rocabroteface.png');
             }
 
             create() {
@@ -41,9 +43,9 @@
 
                 this.platforms = this.physics.add.staticGroup();
                 const groundWidth = this.textures.get('ground').getSourceImage().width;
-                
 
-                for (let i = 0; i < 5; i++) { 
+
+                for (let i = 0; i < 5; i++) {
                     this.platforms.create(i * 425, window.innerHeight - 32, 'ground').setScale(0.5).refreshBody();
                 }
 
@@ -105,29 +107,61 @@
             }
 
             conversateWithRocabrote() {
-            
 
-            const chatBox = this.add.rectangle(window.innerWidth * 0.5, window.innerHeight * 0.12, window.innerWidth * 0.9, window.innerHeight * 0.1, 0xffffff).setOrigin(0.5);
-            chatBox.setStrokeStyle(2, 0x000000);
-            const rocabroteFace = this.add.image(chatBox.x - chatBox.width / 2 + 20, chatBox.y, 'rocabroteface').setOrigin(0.5);
-            const rocabroteFaceScaleFactor = (chatBox.height * 0.8) / rocabroteFace.height;
-            rocabroteFace.setScale(rocabroteFaceScaleFactor);
-            const chatText = this.add.text(chatBox.x, chatBox.y, '', { fontSize: '16px', color: '#000000', wordWrap: { width: chatBox.width - 10 } }).setOrigin(0.5);
-            const fullText = 'Hola, viajero. ¿Qué te trae por aquí?';
-            let currentIndex = 0;
+                const chatBox = this.add.rectangle(window.innerWidth * 0.5, window.innerHeight * 0.12, window.innerWidth * 0.9, window.innerHeight * 0.1, 0xffffff).setOrigin(0.5);
+                chatBox.setStrokeStyle(2, 0x000000);
+                const rocabroteFace = this.add.image(chatBox.x - chatBox.width / 2 + 40, chatBox.y, 'rocabroteface').setOrigin(0.5);
+                const rocabroteFaceScaleFactor = (chatBox.height * 0.8) / rocabroteFace.height;
+                rocabroteFace.setScale(rocabroteFaceScaleFactor);
+                const chatText = this.add.text(chatBox.x, chatBox.y, '', { fontSize: '16px', color: '#000000', wordWrap: { width: chatBox.width - 10 } }).setOrigin(0.5);
+                const fullText = 'Hola, viajero. ¿Qué te trae por aquí?';
+                let currentIndex = 0;
 
-            for (let i = 0; i < fullText.length; i++) {
-                this.time.addEvent({
-                    delay: 50 * i,
-                    callback: () => {
-                        chatText.text += fullText[i];
-                    }
+                for (let i = 0; i < fullText.length; i++) {
+                    this.time.addEvent({
+                        delay: 50 * i,
+                        callback: () => {
+                            chatText.text += fullText[i];
+                        }
+                    });
+                }
+                
+                this.time.delayedCall(fullText.length * 50, () => {
+                    const options = ['¿Quién eres?', '¿Dónde estoy?', '¿Qué haces aquí?'];
+                    const optionElements = [];
+
+                    options.forEach((option, index) => {
+                        const optionElement = this.add.text(chatBox.x - chatBox.width / 2 + 100 + (index * 200), chatBox.y + chatBox.height / 2 + 30, option, { fontSize: '20px', color: '#000000', backgroundColor: '#ffffff' }).setOrigin(0.5);
+                        optionElement.setInteractive({ draggable: true });
+                        optionElements.push(optionElement);
+                    });
+
+                    this.input.on('dragstart', (pointer, gameObject) => {
+                        gameObject.setVisible(true);
+                    });
+
+                    this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
+                        gameObject.x = dragX;
+                        gameObject.y = dragY;
+                    });
+
+                    this.input.on('dragend', (pointer, gameObject) => {
+                        if (Phaser.Geom.Intersects.RectangleToRectangle(gameObject.getBounds(), chatBox.getBounds())) {
+                            chatText.text = gameObject.text;
+                            optionElements.forEach(option => option.destroy());
+                            this.time.delayedCall(3000, () => {
+                                chatBox.destroy();
+                                chatText.destroy();
+                            }, [], this);
+                        } else {
+                            gameObject.setVisible(false);
+                            gameObject.x = chatBox.x - chatBox.width / 2 + 100 + (options.indexOf(gameObject.text) * 200);
+                            gameObject.y = chatBox.y + chatBox.height / 2 + 30;
+                            gameObject.setVisible(true);
+                        }
+                    });
                 });
-            }
-            // this.time.delayedCall(3000, () => {
-            //     chatBox.destroy();
-            //     chatText.destroy();
-            // }, [], this);
+                
             }
 
             update() {
