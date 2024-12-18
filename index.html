@@ -24,8 +24,10 @@
 <body>
 
     <script>
+
+        
         class Arvandor extends Phaser.Scene {
-            action = false;
+            
             constructor() {
                 super('Arvandor');
             }
@@ -39,6 +41,8 @@
             }
 
             create() {
+                this.action = false;
+                this.inAction = false;
                 this.add.image(0, 0, 'background').setOrigin(0, 0).setDisplaySize(window.innerWidth, window.innerHeight);
 
                 this.platforms = this.physics.add.staticGroup();
@@ -107,7 +111,7 @@
             }
 
             conversateWithRocabrote() {
-
+                this.inAction = true;
                 const chatBox = this.add.rectangle(window.innerWidth * 0.5, window.innerHeight * 0.12, window.innerWidth * 0.9, window.innerHeight * 0.1, 0xffffff).setOrigin(0.5);
                 chatBox.setStrokeStyle(2, 0x000000);
                 const rocabroteFace = this.add.image(chatBox.x - chatBox.width / 2 + 40, chatBox.y, 'rocabroteface').setOrigin(0.5);
@@ -136,10 +140,6 @@
                         optionElements.push(optionElement);
                     });
 
-                    this.input.on('dragstart', (pointer, gameObject) => {
-                        gameObject.setVisible(true);
-                    });
-
                     this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
                         gameObject.x = dragX;
                         gameObject.y = dragY;
@@ -163,23 +163,25 @@
                 });
                 
             }
-
+            
             update() {
+                
                 const speed = window.innerWidth * 0.22;
-                if (this.cursors.left.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) {
+                console.log(this.action);
+                if ((this.cursors.left.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) && !this.inAction) {
                     this.main_character.setVelocityX(-speed);
                     this.main_character.flipX = true;
-                } else if (this.cursors.right.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D).isDown) {
+                } else if ((this.cursors.right.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D).isDown) && !this.inAction) {
                     this.main_character.setVelocityX(speed);
                     this.main_character.flipX = false;
                 } else {
                     this.main_character.setVelocityX(0);
                 }
-                if (this.cursors.up.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE).isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown) {
+                if ((this.cursors.up.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE).isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown) && !this.inAction) {
                     this.main_character.setVelocityY(-speed);
                 }
 
-                if (this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER).isDown && this.action) {
+                if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER)) && this.action) {
                     this.conversateWithRocabrote();
                     this.exclamation.setVisible(false);
                 }
