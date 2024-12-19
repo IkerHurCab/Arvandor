@@ -25,11 +25,16 @@
 
     <script>
 
-        
+
         class Arvandor extends Phaser.Scene {
-            
+
             constructor() {
                 super('Arvandor');
+                this.currentIndex = 0;
+                this.playerText = '';
+                this.options = ['¿Quién eres?', '¿Dónde estoy?', '¿Qué haces aquí?'];
+                this.inAction = false;
+                this.action = false;
             }
             preload() {
                 this.load.image('exclamation', 'images/exclamation.png');
@@ -38,21 +43,10 @@
                 this.load.image('background', 'images/background.jpg');
                 this.load.image('ground', 'images/ground.png');
                 this.load.image('rocabroteface', 'images/rocabroteface.png');
+                this.load.image('playerface', 'images/playerface.png');
             }
 
-            create() {
-                this.action = false;
-                this.inAction = false;
-                this.add.image(0, 0, 'background').setOrigin(0, 0).setDisplaySize(window.innerWidth, window.innerHeight);
-
-                this.platforms = this.physics.add.staticGroup();
-                const groundWidth = this.textures.get('ground').getSourceImage().width;
-
-
-                for (let i = 0; i < 5; i++) {
-                    this.platforms.create(i * 425, window.innerHeight - 32, 'ground').setScale(0.5).refreshBody();
-                }
-
+            createAnimations() {
                 this.anims.create({
                     key: 'rocabrote_anim',
                     frames: this.anims.generateFrameNumbers('rocabrote', { start: 0, end: -1 }),
@@ -65,7 +59,21 @@
                     frameRate: 4,
                     repeat: -1
                 });
+            }
 
+            createScenario() {
+                this.add.image(0, 0, 'background').setOrigin(0, 0).setDisplaySize(window.innerWidth, window.innerHeight);
+
+                this.platforms = this.physics.add.staticGroup();
+                const groundWidth = this.textures.get('ground').getSourceImage().width;
+
+
+                for (let i = 0; i < 5; i++) {
+                    this.platforms.create(i * 425, window.innerHeight - 32, 'ground').setScale(0.5).refreshBody();
+                }
+            }
+
+            createAssets(){
                 const exclamation = this.add.sprite(0, 0, 'exclamation').setVisible(false);
                 this.exclamation = exclamation;
 
@@ -89,9 +97,9 @@
                 this.rocabrote = rocabrote;
 
                 main_character.setDepth(1);
+            }
 
-                this.cursors = this.input.keyboard.createCursorKeys();
-
+            createHitBoxes(){
                 this.physics.add.overlap(this.main_character, this.rocabrote, this.showExclamation, null, this);
                 this.physics.add.collider(this.main_character, this.platforms);
                 this.physics.add.collider(this.rocabrote, this.platforms);
@@ -110,64 +118,121 @@
                 }
             }
 
-            conversateWithRocabrote() {
-                this.inAction = true;
+            create() {
+                this.createScenario();
+                this.createAnimations();
+                this.createAssets();
+                this.createHitBoxes();
+                this.cursors = this.input.keyboard.createCursorKeys();
+            }
+
+            nextRocabroteText() {
+                const texts = ['Hola, viajero. ¿Qué te trae por aquí?', 'Soy Rocabrote, el guardián de Arvandor.', '¿Qué te trae por aquí?'];
+                let options = ['¿Quién eres?', '¿Dónde estoy?', '¿Qué haces aquí?'];
+
+                if (this.currentIndex == 0) {
+                    this.currentIndex++;
+                    return texts[0];
+                }
+
+                if (this.currentIndex == 1) {
+                    switch (this.options.indexOf(this.playerText)) {
+                        case 0:
+                            this.options = ['¿Cuál es tu misión en Arvandor?', '¿Qué representa Arvandor?', '¿Cuál es tu propósito aquí?'];
+                            return 'Soy Rocabrote, el guardián de Arvandor.';
+                        case 1:
+                            this.options = ['Cómo llegué aquí?', '¿Qué es Arvandor?', '¿Qué haces aquí?'];
+                            return 'Estás en Arvandor, el reino de los elfos.';
+                        case 2:
+                            this.options = ['¿Por qué eres el guardián de Arvandor?', '¿Qué es Arvandor?', '¿Qué haces aquí?'];
+                            return 'Soy el guardián de Arvandor, mi deber es proteger este reino.';
+                    }
+                    this.currentIndex++;
+                }
+            }
+
+            createChatElements(faceKey) {
                 const chatBox = this.add.rectangle(window.innerWidth * 0.5, window.innerHeight * 0.12, window.innerWidth * 0.9, window.innerHeight * 0.1, 0xffffff).setOrigin(0.5);
                 chatBox.setStrokeStyle(2, 0x000000);
-                const rocabroteFace = this.add.image(chatBox.x - chatBox.width / 2 + 40, chatBox.y, 'rocabroteface').setOrigin(0.5);
-                const rocabroteFaceScaleFactor = (chatBox.height * 0.8) / rocabroteFace.height;
-                rocabroteFace.setScale(rocabroteFaceScaleFactor);
+                const face = this.add.image(chatBox.x - chatBox.width / 2 + 40, chatBox.y, faceKey).setOrigin(0.5);
+                const faceScaleFactor = (chatBox.height * 0.8) / face.height;
+                face.setScale(faceScaleFactor);
                 const chatText = this.add.text(chatBox.x, chatBox.y, '', { fontSize: '16px', color: '#000000', wordWrap: { width: chatBox.width - 10 } }).setOrigin(0.5);
-                const fullText = 'Hola, viajero. ¿Qué te trae por aquí?';
-                let currentIndex = 0;
+                return { chatBox, face, chatText };
+            }
 
-                for (let i = 0; i < fullText.length; i++) {
+            animateText(chatText, text, callback) {
+                for (let i = 0; i < text.length; i++) {
                     this.time.addEvent({
                         delay: 50 * i,
                         callback: () => {
-                            chatText.text += fullText[i];
+                            chatText.text += text[i];
+                            if (i === text.length - 1 && callback) {
+                                callback();
+                            }
                         }
                     });
                 }
-                
-                this.time.delayedCall(fullText.length * 50, () => {
-                    const options = ['¿Quién eres?', '¿Dónde estoy?', '¿Qué haces aquí?'];
-                    const optionElements = [];
+            }
 
-                    options.forEach((option, index) => {
-                        const optionElement = this.add.text(chatBox.x - chatBox.width / 2 + 100 + (index * 200), chatBox.y + chatBox.height / 2 + 30, option, { fontSize: '20px', color: '#000000', backgroundColor: '#ffffff' }).setOrigin(0.5);
-                        optionElement.setInteractive({ draggable: true });
-                        optionElements.push(optionElement);
-                    });
+            createOptions(chatBox) {
+                const optionElements = [];
+                this.options.forEach((option, index) => {
+                    const optionElement = this.add.text(chatBox.x - chatBox.width / 2 + 100 + (index * 200), chatBox.y + chatBox.height / 2 + 30, option, {
+                        fontSize: '20px',
+                        color: '#000000',
+                        backgroundColor: '#ffffff'
+                    }).setOrigin(0.5);
+                    optionElement.setInteractive({ draggable: true });
+                    optionElements.push(optionElement);
+                });
+                return optionElements;
+            }
 
-                    this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
-                        gameObject.x = dragX;
-                        gameObject.y = dragY;
-                    });
+            setupOptionInteraction(optionElements, chatBox, chatText, rocabroteFace) {
+                this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
+                    gameObject.x = dragX;
+                    gameObject.y = dragY;
+                });
 
-                    this.input.on('dragend', (pointer, gameObject) => {
-                        if (Phaser.Geom.Intersects.RectangleToRectangle(gameObject.getBounds(), chatBox.getBounds())) {
-                            chatText.text = gameObject.text;
+                this.input.on('dragend', (pointer, gameObject) => {
+                    if (Phaser.Geom.Intersects.RectangleToRectangle(gameObject.getBounds(), chatBox.getBounds())) {
+                        chatText.text = '';
+                        const { face: mainCharacterFace } = this.createChatElements('playerface');
+                        rocabroteFace.destroy();
+                        this.playerText = gameObject.text;
+                        this.animateText(chatText, gameObject.text, () => {
                             optionElements.forEach(option => option.destroy());
-                            this.time.delayedCall(3000, () => {
+                            const indicator = this.add.triangle(chatBox.x, chatBox.y + chatBox.height / 2, 0, 0, 10, 20, 20, 0, 0xff0000).setStrokeStyle(2, 0x000000);
+                            this.input.keyboard.once('keydown-ENTER', () => {
+                                indicator.destroy();
                                 chatBox.destroy();
                                 chatText.destroy();
-                            }, [], this);
-                        } else {
-                            gameObject.setVisible(false);
-                            gameObject.x = chatBox.x - chatBox.width / 2 + 100 + (options.indexOf(gameObject.text) * 200);
-                            gameObject.y = chatBox.y + chatBox.height / 2 + 30;
-                            gameObject.setVisible(true);
-                        }
-                    });
+                                mainCharacterFace.destroy();
+                                this.inAction = false;
+                            });
+                        });
+                    } else {
+                        gameObject.setVisible(false);
+                        gameObject.x = chatBox.x - chatBox.width / 2 + 100 + (this.options.indexOf(gameObject.text) * 200);
+                        gameObject.y = chatBox.y + chatBox.height / 2 + 30;
+                        gameObject.setVisible(true);
+                    }
                 });
-                
             }
-            
+
+            conversateWithRocabrote() {
+                const { chatBox, face: rocabroteFace, chatText } = this.createChatElements('rocabroteface');
+                const fullText = this.nextRocabroteText();
+                this.animateText(chatText, fullText, () => {
+                    const optionElements = this.createOptions(chatBox);
+                    this.setupOptionInteraction(optionElements, chatBox, chatText, rocabroteFace);
+                });
+            }
+
             update() {
-                
+
                 const speed = window.innerWidth * 0.22;
-                console.log(this.action);
                 if ((this.cursors.left.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) && !this.inAction) {
                     this.main_character.setVelocityX(-speed);
                     this.main_character.flipX = true;
@@ -177,11 +242,12 @@
                 } else {
                     this.main_character.setVelocityX(0);
                 }
-                if ((this.cursors.up.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE).isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown) && !this.inAction) {
+                if ((this.cursors.up.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE).isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown) && this.main_character.body.touching.down && !this.inAction) {
                     this.main_character.setVelocityY(-speed);
                 }
 
-                if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER)) && this.action) {
+                if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER)) && this.action && !this.inAction) {
+                    this.inAction = true;
                     this.conversateWithRocabrote();
                     this.exclamation.setVisible(false);
                 }
