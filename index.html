@@ -151,76 +151,83 @@
                 }
             }
 
-            conversateWithRocabrote() {
+            createChatElements(faceKey) {
                 const chatBox = this.add.rectangle(window.innerWidth * 0.5, window.innerHeight * 0.12, window.innerWidth * 0.9, window.innerHeight * 0.1, 0xffffff).setOrigin(0.5);
                 chatBox.setStrokeStyle(2, 0x000000);
-                const rocabroteFace = this.add.image(chatBox.x - chatBox.width / 2 + 40, chatBox.y, 'rocabroteface').setOrigin(0.5);
-                const rocabroteFaceScaleFactor = (chatBox.height * 0.8) / rocabroteFace.height;
-                rocabroteFace.setScale(rocabroteFaceScaleFactor);
+                const face = this.add.image(chatBox.x - chatBox.width / 2 + 40, chatBox.y, faceKey).setOrigin(0.5);
+                const faceScaleFactor = (chatBox.height * 0.8) / face.height;
+                face.setScale(faceScaleFactor);
                 const chatText = this.add.text(chatBox.x, chatBox.y, '', { fontSize: '16px', color: '#000000', wordWrap: { width: chatBox.width - 10 } }).setOrigin(0.5);
-                const fullText = this.nextRocabroteText();
+                return { chatBox, face, chatText };
+            }
 
-                for (let i = 0; i < fullText.length; i++) {
+            animateText(chatText, text, callback) {
+                for (let i = 0; i < text.length; i++) {
                     this.time.addEvent({
                         delay: 50 * i,
                         callback: () => {
-                            chatText.text += fullText[i];
+                            chatText.text += text[i];
+                            if (i === text.length - 1 && callback) {
+                                callback();
+                            }
                         }
                     });
                 }
+            }
 
-                this.time.delayedCall(fullText.length * 50, () => {
-                    const optionElements = [];
+            createOptions(chatBox) {
+                const optionElements = [];
+                this.options.forEach((option, index) => {
+                    const optionElement = this.add.text(chatBox.x - chatBox.width / 2 + 100 + (index * 200), chatBox.y + chatBox.height / 2 + 30, option, {
+                        fontSize: '20px',
+                        color: '#000000',
+                        backgroundColor: '#ffffff'
+                    }).setOrigin(0.5);
+                    optionElement.setInteractive({ draggable: true });
+                    optionElements.push(optionElement);
+                });
+                return optionElements;
+            }
 
-                    this.options.forEach((option, index) => {
-                        const optionElement = this.add.text(chatBox.x - chatBox.width / 2 + 100 + (index * 200), chatBox.y + chatBox.height / 2 + 30, option, { fontSize: '20px', color: '#000000', backgroundColor: '#ffffff' }).setOrigin(0.5);
-                        optionElement.setInteractive({ draggable: true });
-                        optionElements.push(optionElement);
-                    });
-
-                    this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
-                        gameObject.x = dragX;
-                        gameObject.y = dragY;
-                    });
-
-                    this.input.on('dragend', (pointer, gameObject) => {
-                        if (Phaser.Geom.Intersects.RectangleToRectangle(gameObject.getBounds(), chatBox.getBounds())) {
-                            chatText.text = '';
-                            const mainCharacterFace = this.add.image(rocabroteFace.x, rocabroteFace.y, 'playerface').setOrigin(0.5);
-                            const mainCharacterFaceScaleFactor = (chatBox.height * 0.8) / mainCharacterFace.height;
-                            mainCharacterFace.setScale(mainCharacterFaceScaleFactor);
-                            rocabroteFace.destroy();
-                            this.playerText = gameObject.text;
-                            for (let i = 0; i < gameObject.text.length; i++) {
-                                this.time.addEvent({
-                                    delay: 50 * i,
-                                    callback: () => {
-                                        chatText.text += gameObject.text[i];
-                                    }
-                                });
-                            }
-                            optionElements.forEach(option => option.destroy());
-                            this.time.delayedCall(gameObject.text.length * 50, () => {
-                                const indicator = this.add.triangle(chatBox.x, chatBox.y + chatBox.height / 2, 0, 0, 10, 20, 20, 0, 0xff0000).setStrokeStyle(2, 0x000000);
-                                this.input.keyboard.once('keydown-ENTER', () => {
-                                    indicator.destroy();
-                                    chatBox.destroy();
-                                    chatText.destroy();
-                                    mainCharacterFace.destroy();
-                                    this.inAction = false;
-                                });
-
-
-                            });
-                        } else {
-                            gameObject.setVisible(false);
-                            gameObject.x = chatBox.x - chatBox.width / 2 + 100 + (this.options.indexOf(gameObject.text) * 200);
-                            gameObject.y = chatBox.y + chatBox.height / 2 + 30;
-                            gameObject.setVisible(true);
-                        }
-                    });
+            setupOptionInteraction(optionElements, chatBox, chatText, rocabroteFace) {
+                this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
+                    gameObject.x = dragX;
+                    gameObject.y = dragY;
                 });
 
+                this.input.on('dragend', (pointer, gameObject) => {
+                    if (Phaser.Geom.Intersects.RectangleToRectangle(gameObject.getBounds(), chatBox.getBounds())) {
+                        chatText.text = '';
+                        const { face: mainCharacterFace } = this.createChatElements('playerface');
+                        rocabroteFace.destroy();
+                        this.playerText = gameObject.text;
+                        this.animateText(chatText, gameObject.text, () => {
+                            optionElements.forEach(option => option.destroy());
+                            const indicator = this.add.triangle(chatBox.x, chatBox.y + chatBox.height / 2, 0, 0, 10, 20, 20, 0, 0xff0000).setStrokeStyle(2, 0x000000);
+                            this.input.keyboard.once('keydown-ENTER', () => {
+                                indicator.destroy();
+                                chatBox.destroy();
+                                chatText.destroy();
+                                mainCharacterFace.destroy();
+                                this.inAction = false;
+                            });
+                        });
+                    } else {
+                        gameObject.setVisible(false);
+                        gameObject.x = chatBox.x - chatBox.width / 2 + 100 + (this.options.indexOf(gameObject.text) * 200);
+                        gameObject.y = chatBox.y + chatBox.height / 2 + 30;
+                        gameObject.setVisible(true);
+                    }
+                });
+            }
+
+            conversateWithRocabrote() {
+                const { chatBox, face: rocabroteFace, chatText } = this.createChatElements('rocabroteface');
+                const fullText = this.nextRocabroteText();
+                this.animateText(chatText, fullText, () => {
+                    const optionElements = this.createOptions(chatBox);
+                    this.setupOptionInteraction(optionElements, chatBox, chatText, rocabroteFace);
+                });
             }
 
             update() {
