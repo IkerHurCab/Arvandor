@@ -126,101 +126,190 @@
                 this.cursors = this.input.keyboard.createCursorKeys();
             }
 
-            nextRocabroteText() {
-                const texts = ['Hola, viajero. ¿Qué te trae por aquí?', 'Soy Rocabrote, el guardián de Arvandor.', '¿Qué te trae por aquí?'];
-                let options = ['¿Quién eres?', '¿Dónde estoy?', '¿Qué haces aquí?'];
-
-                if (this.currentIndex == 0) {
-                    this.currentIndex++;
-                    return texts[0];
-                }
-
-                if (this.currentIndex == 1) {
-                    switch (this.options.indexOf(this.playerText)) {
-                        case 0:
-                            this.options = ['¿Cuál es tu misión en Arvandor?', '¿Qué representa Arvandor?', '¿Cuál es tu propósito aquí?'];
-                            return 'Soy Rocabrote, el guardián de Arvandor.';
-                        case 1:
-                            this.options = ['Cómo llegué aquí?', '¿Qué es Arvandor?', '¿Qué haces aquí?'];
-                            return 'Estás en Arvandor, el reino de los elfos.';
-                        case 2:
-                            this.options = ['¿Por qué eres el guardián de Arvandor?', '¿Qué es Arvandor?', '¿Qué haces aquí?'];
-                            return 'Soy el guardián de Arvandor, mi deber es proteger este reino.';
-                    }
-                    this.currentIndex++;
-                }
+            startConversation() {
+                this.inAction = true;
+                this.dialogueIndex = 0;
+                this.dialogueData = this.getDialogueData();
+                this.showDialogue();
             }
 
-            conversateWithRocabrote() {
-                const chatBox = this.add.rectangle(window.innerWidth * 0.5, window.innerHeight * 0.12, window.innerWidth * 0.9, window.innerHeight * 0.1, 0xffffff).setOrigin(0.5);
-                chatBox.setStrokeStyle(2, 0x000000);
-                const rocabroteFace = this.add.image(chatBox.x - chatBox.width / 2 + 40, chatBox.y, 'rocabroteface').setOrigin(0.5);
-                const rocabroteFaceScaleFactor = (chatBox.height * 0.8) / rocabroteFace.height;
-                rocabroteFace.setScale(rocabroteFaceScaleFactor);
-                const chatText = this.add.text(chatBox.x, chatBox.y, '', { fontSize: '16px', color: '#000000', wordWrap: { width: chatBox.width - 10 } }).setOrigin(0.5);
-                const fullText = this.nextRocabroteText();
+            getDialogueData() {
+                return {
+                    npc: 'rocabroteface',
+                    dialogues: [
+                        {
+                            text: 'Hola, viajero. ¿Qué te trae por aquí?',
+                            options: ['¿Quién eres?', '¿Dónde estoy?', '¿Qué haces aquí?']
+                        },
+                        {
+                            responses: {
+                                '¿Quién eres?': {
+                                    text: 'Soy Rocabrote, el guardián de Arvandor.',
+                                    options: ['¿Cuál es tu misión?', '¿Qué es Arvandor?', '¿Puedo ayudarte en algo?']
+                                },
+                                '¿Dónde estoy?': {
+                                    text: 'Estás en Arvandor, el reino de los elfos.',
+                                    options: ['¿Cómo llegué aquí?', '¿Qué es Arvandor?', '¿Hay peligros aquí?']
+                                },
+                                '¿Qué haces aquí?': {
+                                    text: 'Mi deber es proteger este reino.',
+                                    options: ['¿De qué lo proteges?', '¿Puedo explorar el reino?', '¿Necesitas ayuda?']
+                                }
+                            }
+                        },
+                        {
+                            responses: {
+                                '¿Cuál es tu misión?': {
+                                    text: 'Defender Arvandor de las fuerzas oscuras.',
+                                    options: ['¿Cómo puedo ayudar?', '¿Dónde están esas fuerzas?', '¿Es peligroso aquí?']
+                                },
+                                '¿Qué es Arvandor?': {
+                                    text: 'Es un lugar mágico lleno de vida y misterio.',
+                                    options: ['¿Qué misterios?', '¿Puedo explorarlo?', '¿Hay otros como tú?']
+                                },
+                                '¿Puedo ayudarte en algo?': {
+                                    text: 'Tu ayuda sería apreciada. Necesitamos recolectar cristales mágicos.',
+                                    options: ['¿Dónde los encuentro?', '¿Para qué sirven?', 'Cuenta conmigo']
+                                }
+                            }
+                        },
+                        {
+                            responses: {
+                                '¿Cómo llegué aquí?': {
+                                    text: 'Abriendo el juego. ¿No recuerdas?',
+                                    options: ['Es verdad.', '¿Juego? ¿De qué hablas?', '¿Qué juego?']
+                                },
+                                '¿Qué es Arvandor?': {
+                                    text: '',
+                                    options: ['', '', '']
+                                },
+                                '¿Puedo ayudarte en algo?': {
+                                    text: '',
+                                    options: ['']
+                                }
+                            }
+                        },
+                        {
+                            responses: {
+                                'Es verdad.': {
+                                    text: 'Me alegra que lo recuerdes. ¡Bienvenido de nuevo!',
+                                    options: []
+                                },
+                                '¿Juego? ¿De qué hablas?': {
+                                    text: 'Este mundo es más que un simple juego para algunos.',
+                                    options: []
+                                },
+                                '¿Qué juego?': {
+                                    text: 'El que estás jugando ahora mismo.',
+                                    options: []
+                                }
+                            }
+                        }
+                    ]
+                };
+            }
 
-                for (let i = 0; i < fullText.length; i++) {
+            showDialogue() {
+                const dialogue = this.dialogueData.dialogues[this.dialogueIndex];
+                if (!dialogue) {
+                    this.inAction = false;
+                    return;
+                }
+
+                const chatElements = this.createChatElements(this.dialogueData.npc);
+                const { chatBox, chatText, face: npcFace } = chatElements;
+
+                this.animateText(chatText, dialogue.text, () => {
+                    const optionElements = this.createOptions(chatBox, dialogue.options);
+                    this.setupOptionInteraction(optionElements, chatBox, chatText, npcFace, chatElements);
+                });
+            }
+
+            createChatElements(faceKey) {
+                const chatBox = this.add.rectangle(window.innerWidth * 0.5, window.innerHeight * 0.12,
+                    window.innerWidth * 0.9, window.innerHeight * 0.1, 0xffffff).setOrigin(0.5);
+                chatBox.setStrokeStyle(2, 0x000000);
+                const face = this.add.image(chatBox.x - chatBox.width / 2 + 40, chatBox.y, faceKey).setOrigin(0.5);
+                const faceScaleFactor = (chatBox.height * 0.8) / face.height;
+                face.setScale(faceScaleFactor);
+                const chatText = this.add.text(chatBox.x, chatBox.y, '', {
+                    fontSize: '16px',
+                    color: '#000000',
+                    wordWrap: { width: chatBox.width - 10 }
+                }).setOrigin(0.5);
+                return { chatBox, face, chatText };
+            }
+
+            animateText(chatText, text, callback) {
+                for (let i = 0; i < text.length; i++) {
                     this.time.addEvent({
                         delay: 50 * i,
                         callback: () => {
-                            chatText.text += fullText[i];
+                            chatText.text += text[i];
+                            if (i === text.length - 1 && callback) {
+                                callback();
+                            }
                         }
                     });
                 }
+            }
 
-                this.time.delayedCall(fullText.length * 50, () => {
-                    const optionElements = [];
+            createOptions(chatBox, options) {
+                const optionElements = [];
+                options.forEach((option, index) => {
+                    const optionElement = this.add.text(chatBox.x, chatBox.y + chatBox.height / 2 + 30 + (index * 30), option, {
+                        fontSize: '20px',
+                        color: '#000000',
+                        backgroundColor: '#ffffff'
+                    }).setOrigin(0.5);
+                    optionElement.setInteractive({ draggable: true });
+                    optionElements.push(optionElement);
+                });
+                return optionElements;
+            }
 
-                    this.options.forEach((option, index) => {
-                        const optionElement = this.add.text(chatBox.x - chatBox.width / 2 + 100 + (index * 200), chatBox.y + chatBox.height / 2 + 30, option, { fontSize: '20px', color: '#000000', backgroundColor: '#ffffff' }).setOrigin(0.5);
-                        optionElement.setInteractive({ draggable: true });
-                        optionElements.push(optionElement);
-                    });
-
-                    this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
-                        gameObject.x = dragX;
-                        gameObject.y = dragY;
-                    });
-
-                    this.input.on('dragend', (pointer, gameObject) => {
-                        if (Phaser.Geom.Intersects.RectangleToRectangle(gameObject.getBounds(), chatBox.getBounds())) {
-                            chatText.text = '';
-                            const mainCharacterFace = this.add.image(rocabroteFace.x, rocabroteFace.y, 'playerface').setOrigin(0.5);
-                            const mainCharacterFaceScaleFactor = (chatBox.height * 0.8) / mainCharacterFace.height;
-                            mainCharacterFace.setScale(mainCharacterFaceScaleFactor);
-                            rocabroteFace.destroy();
-                            this.playerText = gameObject.text;
-                            for (let i = 0; i < gameObject.text.length; i++) {
-                                this.time.addEvent({
-                                    delay: 50 * i,
-                                    callback: () => {
-                                        chatText.text += gameObject.text[i];
-                                    }
-                                });
-                            }
-                            optionElements.forEach(option => option.destroy());
-                            this.time.delayedCall(gameObject.text.length * 50, () => {
-                                const indicator = this.add.triangle(chatBox.x, chatBox.y + chatBox.height / 2, 0, 0, 10, 20, 20, 0, 0xff0000).setStrokeStyle(2, 0x000000);
-                                this.input.keyboard.once('keydown-ENTER', () => {
-                                    indicator.destroy();
-                                    chatBox.destroy();
-                                    chatText.destroy();
-                                    mainCharacterFace.destroy();
-                                    this.inAction = false;
-                                });
-
-
-                            });
-                        } else {
-                            gameObject.setVisible(false);
-                            gameObject.x = chatBox.x - chatBox.width / 2 + 100 + (this.options.indexOf(gameObject.text) * 200);
-                            gameObject.y = chatBox.y + chatBox.height / 2 + 30;
-                            gameObject.setVisible(true);
-                        }
-                    });
+            setupOptionInteraction(optionElements, chatBox, chatText, npcFace, chatElements) {
+                this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
+                    gameObject.x = dragX;
+                    gameObject.y = dragY;
                 });
 
+                this.input.on('dragend', (pointer, gameObject) => {
+                    if (Phaser.Geom.Intersects.RectangleToRectangle(gameObject.getBounds(), chatBox.getBounds())) {
+                        this.input.removeListener('drag');
+                        this.input.removeListener('dragend');
+
+                        chatText.text = '';
+                        const playerChatElements = this.createChatElements('playerface');
+                        chatBox.destroy();
+                        npcFace.destroy();
+                        const { chatBox: newChatBox, chatText: newChatText, face: playerFace } = playerChatElements;
+
+                        this.animateText(newChatText, gameObject.text, () => {
+                            optionElements.forEach(option => option.destroy());
+
+                            const indicator = this.add.triangle(newChatBox.x, newChatBox.y + newChatBox.height / 2, 0, 0, 10, 20, 20, 0, 0xff0000).setStrokeStyle(2, 0x000000);
+                            this.input.keyboard.once('keydown-ENTER', () => {
+                                indicator.destroy();
+                                newChatBox.destroy();
+                                newChatText.destroy();
+                                playerFace.destroy();
+
+                                const nextDialogue = this.dialogueData.dialogues[this.dialogueIndex + 1];
+                                if (nextDialogue && nextDialogue.responses && nextDialogue.responses[gameObject.text]) {
+                                    this.dialogueIndex++;
+                                    const response = nextDialogue.responses[gameObject.text];
+                                    this.dialogueData.dialogues[this.dialogueIndex] = response;
+                                    this.showDialogue();
+                                } else {
+                                    this.inAction = false;
+                                }
+                            });
+                        });
+                    } else {
+                        gameObject.setPosition(gameObject.input.dragStartX, gameObject.input.dragStartY);
+                    }
+                });
             }
 
             update() {
@@ -238,11 +327,14 @@
                 if ((this.cursors.up.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE).isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown) && this.main_character.body.touching.down && !this.inAction) {
                     this.main_character.setVelocityY(-speed);
                 }
-
                 if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER)) && this.action && !this.inAction) {
-                    this.inAction = true;
-                    this.conversateWithRocabrote();
+                    this.startConversation();
                     this.exclamation.setVisible(false);
+                }
+
+                if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC)) && this.inAction) {
+                    this.inAction = false;
+
                 }
                 this.hideExclamation();
             }
