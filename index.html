@@ -235,6 +235,18 @@
                             this.rocabroteText = 'A juzgar por tu mirada, necesitas algo más que una espada. Adelante, te doy a elegir.';
                             this.options = ['Lanza', 'Escudo', 'Arco'];
                             break;
+                        case 'Lanza':
+                            this.rocabroteText = 'Con esta lanza podrás atacar a tus enemigos con mayor alcance. Buena elección.';
+                            this.options = ['Gracias', 'Adiós'];
+                            break;
+                        case 'Escudo':
+                            this.rocabroteText = 'Con este escudo podrás protegerte de los ataques enemigos. Te irá bien en tu viaje.';
+                            this.options = ['Gracias', 'Adiós'];
+                            break;
+                        case 'Arco':
+                            this.rocabroteText = 'Con este arco podrás atacar a tus enemigos desde la distancia. Buena elección.';
+                            this.options = ['Gracias', 'Adiós'];
+                            break;
                         case 'Gracias':
                             this.rocabroteText = 'De nada, viajero. Que tengas un buen viaje.';
                             this.options = ['Adiós'];
@@ -264,7 +276,7 @@
             startConversation() {
                 this.inAction = true;
                 this.exclamation.setVisible(false);
-                const rocabroteTextBox = this.add.text(window.innerWidth / 2, window.innerHeight * 3 / 4, this.rocabroteText, {
+                const rocabroteTextBox = this.add.text(window.innerWidth / 2, window.innerHeight / 4, this.rocabroteText, {
                     font: '32px Comic Sans MS',
                     fill: '#000000',
                     backgroundColor: '#ffffff',
