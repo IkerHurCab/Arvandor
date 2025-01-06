@@ -36,6 +36,8 @@
                 this.options = ['¿Quién eres?', '¿Dónde estoy?', '¿Qué haces aquí?'];
                 this.inAction = false;
                 this.action = false;
+                this.lives = 3;
+                this.hearts = [];
             }
             preload() {
                 this.load.image('exclamation', 'images/exclamation.png');
@@ -48,6 +50,9 @@
                 this.load.spritesheet('idle_spear', 'images/idle_spear.png', { frameWidth: 50, frameHeight: 32 });
                 this.load.spritesheet('idle_bow', 'images/idle_bow.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('idle_shield', 'images/idle_shield.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.image('heart', 'images/heart.png');
+                this.load.spritesheet('running', 'images/running.png', { frameWidth: 32, frameHeight: 32 });
+
             }
 
             createAnimations() {
@@ -81,6 +86,13 @@
                 this.anims.create({
                     key: 'shield_anim',
                     frames: this.anims.generateFrameNumbers('idle_shield', { start: 0, end: -1 }),
+                    frameRate: 4,
+                    repeat: -1
+                });
+
+                this.anims.create({
+                    key: 'running_anim',
+                    frames: this.anims.generateFrameNumbers('running', { start: 0, end: -1 }),
                     frameRate: 4,
                     repeat: -1
                 });
@@ -158,7 +170,34 @@
                 this.createAssets();
                 this.createHitBoxes();
                 this.cursors = this.input.keyboard.createCursorKeys();
+
+                const heartSpacing = 50;
+                for (let i = 0; i < this.lives; i++) {
+                    const heart = this.add.image(30 + i * heartSpacing, 30, 'heart').setScale(0.05).setOrigin(0.5, 0.5);
+                    this.hearts.push(heart);
+                }
             }
+
+            loseLife() {
+                if (this.lives > 0) {
+                    this.lives--;
+                    const lostHeart = this.hearts.pop();
+                    lostHeart.destroy();
+
+                    if (this.lives === 0) {
+                        this.gameOver();
+                    }
+                }
+            }
+
+            gameOver() {
+                this.add.text(window.innerWidth / 2, window.innerHeight / 2, 'Game Over', {
+                    font: '64px Arial',
+                    fill: '#ff0000'
+                }).setOrigin(0.5);
+                this.scene.pause();
+            }
+
 
             enableDragAndDrop() {
 
@@ -288,12 +327,12 @@
                             this.options = ['Salir'];
                             break;
                         case 'Salir':
+                            this.optionTexts.forEach(optionText => optionText.destroy());
+                            this.optionTexts = [];
                             this.rocabroteTextBox.destroy();
-                            this.optionTexts.forEach(optionText => {
-                                optionText.destroy();
-                            });
                             this.inAction = false;
                             break;
+
                         default:
                             this.rocabroteText = 'No entiendo tu pregunta.';
                             this.options = ['Volver a preguntar', 'Salir'];
@@ -327,11 +366,23 @@
                 if ((this.cursors.left.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) && !this.inAction) {
                     this.main_character.setVelocityX(-speed);
                     this.main_character.flipX = true;
+
+                    if (this.main_character.anims.currentAnim.key !== 'running_anim') {
+                        this.main_character.play('running_anim');
+                    }
                 } else if ((this.cursors.right.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D).isDown) && !this.inAction) {
                     this.main_character.setVelocityX(speed);
                     this.main_character.flipX = false;
+                    if (this.main_character.anims.currentAnim.key !== 'running_anim') {
+                        this.main_character.play('running_anim');
+                    }
                 } else {
                     this.main_character.setVelocityX(0);
+
+                    if (this.main_character.anims.currentAnim.key !== 'idle_anim') {
+                        this.main_character.play('idle_anim');
+                    }
+
                 }
                 if ((this.cursors.up.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE).isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown) && this.main_character.body.touching.down && !this.inAction) {
                     this.main_character.setVelocityY(-speed);
@@ -346,6 +397,10 @@
 
                 }
                 this.hideExclamation();
+
+                if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.H))) {
+                    this.loseLife();
+                }
             }
         }
 
