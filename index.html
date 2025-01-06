@@ -4,6 +4,7 @@
 <head>
     <title>Arvandor</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
 </head>
 <style>
@@ -30,6 +31,7 @@
 
             constructor() {
                 super('Arvandor');
+                this.weapon = 'sword';
                 this.currentIndex = 0;
                 this.playerText = '';
                 this.rocabroteText = 'Buenas, viajero. ¿Qué te trae por aquí?';
@@ -208,7 +210,7 @@
 
                 this.options.forEach((opt, idx) => {
                     const optionText = this.add.text(100, 100 + (idx * 60), opt,
-                        { font: '20px Arial', fill: '#000000', backgroundColor: '#ffffff' }
+                        { font: '16px "Press Start 2P"', fill: '#000000', backgroundColor: '#ffffff' }
                     ).setInteractive();
                     this.input.setDraggable(optionText);
                     this.optionTexts.push(optionText);
@@ -307,16 +309,19 @@
                             this.rocabroteText = 'Con esta lanza podrás atacar a tus enemigos con mayor alcance. Buena elección.';
                             this.options = ['Gracias', 'Adiós'];
                             this.changeWeapon('spear_anim');
+                            this.weapon = 'spear';
                             break;
                         case 'Escudo':
                             this.rocabroteText = 'Con este escudo podrás protegerte de los ataques enemigos. Te irá bien en tu viaje.';
                             this.options = ['Gracias', 'Adiós'];
                             this.changeWeapon('shield_anim');
+                            this.weapon = 'shield';
                             break;
                         case 'Arco':
                             this.rocabroteText = 'Con este arco podrás atacar a tus enemigos desde la distancia. Buena elección.';
                             this.options = ['Gracias', 'Adiós'];
                             this.changeWeapon('bow_anim');
+                            this.weapon = 'bow';
                             break;
                         case 'Gracias':
                             this.rocabroteText = 'De nada, viajero. Que tengas un buen viaje.';
@@ -348,7 +353,7 @@
                 this.inAction = true;
                 this.exclamation.setVisible(false);
                 const rocabroteTextBox = this.add.text(window.innerWidth / 2, window.innerHeight / 4, this.rocabroteText, {
-                    font: '32px Comic Sans MS',
+                    font: '16px "Press Start 2P"',
                     fill: '#000000',
                     backgroundColor: '#ffffff',
                     padding: { x: 20, y: 10 },
@@ -379,8 +384,22 @@
                 } else {
                     this.main_character.setVelocityX(0);
 
-                    if (this.main_character.anims.currentAnim.key !== 'idle_anim') {
-                        this.main_character.play('idle_anim');
+                    if (this.main_character.anims.currentAnim.key !== 'idle_anim' && this.main_character.anims.currentAnim.key !== 'idle_spear' && this.main_character.anims.currentAnim.key !== 'idle_bow' && this.main_character.anims.currentAnim.key !== 'idle_shield') {
+                        switch (this.weapon) {
+                            case 'sword':
+                                console.log('sword');
+                                this.main_character.play('idle_anim');
+                                break;
+                            case 'spear':
+                                this.main_character.play('spear_anim');
+                                break;
+                            case 'bow':
+                                this.main_character.play('bow_anim');
+                                break;
+                            case 'shield':
+                                this.main_character.play('shield_anim');
+                                break;
+                        }
                     }
 
                 }
