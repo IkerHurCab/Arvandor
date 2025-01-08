@@ -193,7 +193,7 @@
             }
 
             gameOver() {
-                this.add.text(window.innerWidth / 2, window.innerHeight / 2, 'Game Over', {
+                this.add.text(window.innerWidth / 2, window.innerHeight / 2, 'Test', {
                     font: '64px Arial',
                     fill: '#ff0000'
                 }).setOrigin(0.5);
@@ -210,7 +210,7 @@
 
                 this.options.forEach((opt, idx) => {
                     const optionText = this.add.text(100, 100 + (idx * 60), opt,
-                        { font: '16px "Press Start 2P"', fill: '#000000', backgroundColor: '#ffffff' }
+                        { font: '16px', fontFamily: '"Press Start 2P"', fill: '#000000', backgroundColor: '#ffffff', padding: { x: 10, y: 5 } }
                     ).setInteractive();
                     this.input.setDraggable(optionText);
                     this.optionTexts.push(optionText);
@@ -353,7 +353,8 @@
                 this.inAction = true;
                 this.exclamation.setVisible(false);
                 const rocabroteTextBox = this.add.text(window.innerWidth / 2, window.innerHeight / 4, this.rocabroteText, {
-                    font: '16px "Press Start 2P"',
+                    font: '16px',
+                    fontFamily: '"Press Start 2P"',
                     fill: '#000000',
                     backgroundColor: '#ffffff',
                     padding: { x: 20, y: 10 },
