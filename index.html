@@ -359,10 +359,16 @@
                             this.options = ['Salir'];
                             break;
                         case 'Salir':
+                            this.rocabroteText = '¿Necesitas algo más?';
+                            this.options = ['Prefiero otro arma', 'Cuéntame más sobre Arvandor','Salir'];
                             this.endConversation();
                             return;
                             break;
 
+                        case 'Prefiero otro arma':
+                            this.rocabroteText = 'Sin problema. ¿Qué prefieres?';
+                            this.options = ['Lanza', 'Escudo', 'Arco'];
+                            break;
                         default:
                             this.rocabroteText = 'No entiendo tu pregunta.';
                             this.options = ['Volver a preguntar', 'Salir'];
@@ -409,7 +415,7 @@
                         this.isMoving = true;
                         switch (this.weapon) {
                             case 'sword':
-                                    this.main_character.play('running_anim');
+                                this.main_character.play('running_anim');
                                 break;
                             case 'spear':
                                 this.main_character.play('spear_running_anim');
@@ -432,7 +438,7 @@
                         this.isMoving = true;
                         switch (this.weapon) {
                             case 'sword':
-                                    this.main_character.play('running_anim');
+                                this.main_character.play('running_anim');
                                 break;
                             case 'spear':
                                 this.main_character.play('spear_running_anim');
