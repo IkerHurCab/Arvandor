@@ -40,6 +40,9 @@
                 this.action = false;
                 this.lives = 3;
                 this.hearts = [];
+                this.isAlive = true;
+                this.isMoving = false;
+                this.isRunning = false;
             }
             preload() {
                 this.load.image('exclamation', 'images/exclamation.png');
@@ -54,6 +57,9 @@
                 this.load.spritesheet('idle_shield', 'images/idle_shield.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.image('heart', 'images/heart.png');
                 this.load.spritesheet('running', 'images/running.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('spear_running', 'images/spear_running.png', { frameWidth: 50, frameHeight: 32 });
+                this.load.spritesheet('bow_running', 'images/bow_running.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('shield_running', 'images/shield_running.png', { frameWidth: 32, frameHeight: 32 });
 
             }
 
@@ -95,6 +101,27 @@
                 this.anims.create({
                     key: 'running_anim',
                     frames: this.anims.generateFrameNumbers('running', { start: 0, end: -1 }),
+                    frameRate: 4,
+                    repeat: -1
+                });
+
+                this.anims.create({
+                    key: 'spear_running_anim',
+                    frames: this.anims.generateFrameNumbers('spear_running', { start: 0, end: -1 }),
+                    frameRate: 4,
+                    repeat: -1
+                });
+
+                this.anims.create({
+                    key: 'bow_running_anim',
+                    frames: this.anims.generateFrameNumbers('bow_running', { start: 0, end: -1 }),
+                    frameRate: 4,
+                    repeat: -1
+                });
+
+                this.anims.create({
+                    key: 'shield_running_anim',
+                    frames: this.anims.generateFrameNumbers('shield_running', { start: 0, end: -1 }),
                     frameRate: 4,
                     repeat: -1
                 });
@@ -332,10 +359,8 @@
                             this.options = ['Salir'];
                             break;
                         case 'Salir':
-                            this.optionTexts.forEach(optionText => optionText.destroy());
-                            this.optionTexts = [];
-                            this.rocabroteTextBox.destroy();
-                            this.inAction = false;
+                            this.endConversation();
+                            return;
                             break;
 
                         default:
@@ -366,6 +391,13 @@
                 this.enableDragAndDrop();
             }
 
+            endConversation() {
+                this.rocabroteTextBox.destroy();
+                this.optionTexts.forEach(optionText => optionText.destroy());
+                this.optionTexts = [];
+                this.inAction = false;
+            }
+
 
             update() {
                 const speed = window.innerWidth * 0.22;
@@ -373,34 +405,75 @@
                     this.main_character.setVelocityX(-speed);
                     this.main_character.flipX = true;
 
-                    if (this.main_character.anims.currentAnim.key !== 'running_anim') {
-                        this.main_character.play('running_anim');
-                    }
-                } else if ((this.cursors.right.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D).isDown) && !this.inAction) {
-                    this.main_character.setVelocityX(speed);
-                    this.main_character.flipX = false;
-                    if (this.main_character.anims.currentAnim.key !== 'running_anim') {
-                        this.main_character.play('running_anim');
-                    }
-                } else {
-                    this.main_character.setVelocityX(0);
-
-                    if (this.main_character.anims.currentAnim.key !== 'idle_anim' && this.main_character.anims.currentAnim.key !== 'idle_spear' && this.main_character.anims.currentAnim.key !== 'idle_bow' && this.main_character.anims.currentAnim.key !== 'idle_shield') {
+                    if (!this.isMoving) {
+                        this.isMoving = true;
                         switch (this.weapon) {
                             case 'sword':
-                                console.log('sword');
-                                this.main_character.play('idle_anim');
+                                    this.main_character.play('running_anim');
                                 break;
                             case 'spear':
-                                this.main_character.play('spear_anim');
+                                this.main_character.play('spear_running_anim');
                                 break;
                             case 'bow':
-                                this.main_character.play('bow_anim');
+                                this.main_character.play('bow_running_anim');
                                 break;
                             case 'shield':
-                                this.main_character.play('shield_anim');
+                                this.main_character.play('shield_running_anim');
                                 break;
                         }
+                    }
+
+                } else if ((this.cursors.right.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D).isDown) && !this.inAction) {
+
+                    this.main_character.setVelocityX(speed);
+                    this.main_character.flipX = false;
+
+                    if (!this.isMoving) {
+                        this.isMoving = true;
+                        switch (this.weapon) {
+                            case 'sword':
+                                    this.main_character.play('running_anim');
+                                break;
+                            case 'spear':
+                                this.main_character.play('spear_running_anim');
+                                break;
+                            case 'bow':
+                                this.main_character.play('bow_running_anim');
+                                break;
+                            case 'shield':
+                                this.main_character.play('shield_running_anim');
+                                break;
+                        }
+                    }
+
+                } else {
+                    this.main_character.setVelocityX(0);
+                    this.isMoving = false;
+                    switch (this.weapon) {
+                        case 'sword':
+                            if (this.main_character.anims.currentAnim.key !== 'idle_anim') {
+                                console.log('sword');
+                                this.main_character.play('idle_anim');
+                            }
+                            break;
+                        case 'spear':
+                            if (this.main_character.anims.currentAnim.key !== 'spear_anim') {
+                                console.log('spear');
+                                this.main_character.play('spear_anim');
+                            }
+                            break;
+                        case 'bow':
+                            if (this.main_character.anims.currentAnim.key !== 'bow_anim') {
+                                console.log('bow');
+                                this.main_character.play('bow_anim');
+                            }
+                            break;
+                        case 'shield':
+                            if (this.main_character.anims.currentAnim.key !== 'shield_anim') {
+                                console.log('shield');
+                                this.main_character.play('shield_anim');
+                            }
+                            break;
                     }
 
                 }
@@ -414,6 +487,8 @@
 
                 if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC)) && this.inAction) {
                     this.inAction = false;
+                    this.rocabroteTextBox.destroy();
+                    this.optionTexts.forEach(optionText => optionText.destroy());
 
                 }
                 this.hideExclamation();
