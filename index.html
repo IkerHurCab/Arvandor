@@ -205,17 +205,56 @@
                     const heart = this.add.image(30 + i * heartSpacing, 30, 'heart').setScale(0.05).setOrigin(0.5, 0.5);
                     this.hearts.push(heart);
                 }
+
+                this.tweens.add({
+                    targets: this.hearts[this.lives - 1],
+                    scale: { from: 0.05, to: 0.06 },
+                    duration: 150 * this.lives,
+                    yoyo: true,
+                    repeat: -1
+                });
             }
 
-            loseLife() {
-                if (this.lives > 0) {
-                    this.lives--;
-                    const lostHeart = this.hearts.pop();
-                    lostHeart.destroy();
+            //función obsoleta por ahora
+            reloadHearts() {
+                this.hearts.forEach(heart => heart.destroy());
+                this.hearts = [];
+                const heartSpacing = 50;
+                for (let i = 0; i < this.lives; i++) {
+                    const heart = this.add.image(30 + i * heartSpacing, 30, 'heart').setScale(0.05).setOrigin(0.5, 0.5);
+                    this.hearts.push(heart);
+                }
+            }
 
-                    if (this.lives === 0) {
-                        this.gameOver();
+            animateHearts() {
+                let heartSpeed = 150 * this.lives;
+
+                this.tweens.add({
+                    targets: this.hearts[this.lives - 1],
+                    scale: { from: 0.05, to: 0.06 },
+                    duration: heartSpeed,
+                    yoyo: true,
+                    repeat: -1
+                });
+            }
+
+            loseLife(lifes) {
+                if (this.lives > 0) {
+                    
+                    for (let i = 0; i < lifes; i++) {
+                        const lostHeart = this.hearts.pop();
+                        lostHeart ? lostHeart.destroy() : null;
                     }
+
+                    this.lives -= lifes;
+
+                    if (this.lives <= 0) {
+                        this.gameOver();
+                        return;
+                    }
+
+   
+                    this.animateHearts();
                 }
             }
 
@@ -236,9 +275,20 @@
                 this.optionTexts = [];
 
                 this.options.forEach((opt, idx) => {
-                    const optionText = this.add.text(100, 100 + (idx * 60), opt,
+
+
+                    const optionText = this.add.text(0, 100 + (idx * 60), opt,
                         { font: '16px', fontFamily: '"Press Start 2P"', fill: '#000000', backgroundColor: '#ffffff', padding: { x: 10, y: 5 } }
                     ).setInteractive();
+
+                    this.tweens.add({
+                        targets: optionText,
+                        x: 100,
+                        duration: 500,
+                        ease: 'Power2'
+                    });
+
+
                     this.input.setDraggable(optionText);
                     this.optionTexts.push(optionText);
 
@@ -360,7 +410,7 @@
                             break;
                         case 'Salir':
                             this.rocabroteText = '¿Necesitas algo más?';
-                            this.options = ['Prefiero otro arma', 'Cuéntame más sobre Arvandor','Salir'];
+                            this.options = ['Prefiero otro arma', 'Cuéntame más sobre Arvandor', 'Salir'];
                             this.endConversation();
                             return;
                             break;
@@ -376,7 +426,10 @@
                     }
 
                     this.rocabroteTextBox.setText(this.rocabroteText);
+
+
                     this.enableDragAndDrop();
+
                 });
             }
 
@@ -406,7 +459,8 @@
 
 
             update() {
-                const speed = window.innerWidth * 0.22;
+                const speed = 300;
+
                 if ((this.cursors.left.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) && !this.inAction) {
                     this.main_character.setVelocityX(-speed);
                     this.main_character.flipX = true;
@@ -500,7 +554,7 @@
                 this.hideExclamation();
 
                 if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.H))) {
-                    this.loseLife();
+                    this.loseLife(1);
                 }
             }
         }
