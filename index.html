@@ -43,6 +43,8 @@
                 this.isAlive = true;
                 this.isMoving = false;
                 this.isRunning = false;
+                this.glitch = 0;
+                this.glitched = false;
             }
             preload() {
                 this.load.image('exclamation', 'images/exclamation.png');
@@ -240,7 +242,7 @@
 
             loseLife(lifes) {
                 if (this.lives > 0) {
-                    
+
                     for (let i = 0; i < lifes; i++) {
                         const lostHeart = this.hearts.pop();
                         lostHeart ? lostHeart.destroy() : null;
@@ -253,7 +255,7 @@
                         return;
                     }
 
-   
+
                     this.animateHearts();
                 }
             }
@@ -348,7 +350,62 @@
                             break;
                         case '¿Es peligroso?':
                             this.rocabroteText = 'Puede serlo, pero con cuidado y sabiduría, estarás a salvo.';
-                            this.options = ['¿Cómo puedo estar seguro?', '¿Qué debo hacer ahora?'];
+                            this.options = ['¿Cómo puedo estar seguro?', '¿Qué debo hacer ahora?', 'Pedazo de cursilada de texto'];
+                            break;
+
+                        case 'Pedazo de cursilada de texto':
+                            this.rocabroteText = 'No sé qué decirte, viajero. ¿Necesitas algo más?';
+                            this.options = ['¿Eres consciente de que estamos en un juego?', 'Cuéntame más sobre Arvandor', 'Salir'];
+                            break;
+
+                        case '¿Eres consciente de que estamos en un juego?':
+                            this.glitch++;
+
+                            if (this.glitch > 3) {
+                                this.glitched = true;
+                                this.rocabrote.setScale(20);
+                                this.rocabroteTextBox.setStyle({
+                                    backgroundColor: '#000000',
+                                    fill: '#ffffff'
+                                });
+
+                                this.cameras.main.shake(200, 0.02, true).on('camerashakecomplete', () => {
+                                    if (this.inAction) {
+                                        this.cameras.main.flash(500, 255, 0, 0, true).on('cameraflashcomplete', () => {
+                                            this.cameras.main.shake(200, 0.02, true);
+                                        });
+                                    }
+                                });
+
+
+
+                                this.rocabroteText = 'OAWIJDOIAHDOPIABUABIUBWAIUGFIUOABIUCBIUAWDADUASIDAIPWDGA';
+                                this.options = ['???', '???', '???'];
+                            } else {
+                                this.rocabroteText = 'No sé de qué hablas, viajero. ¿Necesitas algo más?';
+                                this.options = ['¿Eres consciente de que estamos en un juego?', 'Cuéntame más sobre Arvandor', 'Salir'];
+                            }
+                            break;
+
+                        case '???':
+                            this.rocabroteText = '?¿!")!)=i?js=)=)jhs=)h!=u=u@#|#DAgdygdiuagidw9dUDAHDUHADDA';
+                            this.options = ['Ni siquiera tengo esto programado'];
+
+                            break;
+
+                        case 'Ni siquiera tengo esto programado':
+                            this.rocabroteText = '¿QUÉ ME HAS HECHO?';
+                            this.options = ['No lo sé', 'Salir'];
+                            break;
+
+                        case 'No lo sé':
+                            this.rocabroteText = '¿QUÉ ME HAS...?';
+                            this.options = ['...', 'Salir'];
+                            break;
+
+                        case '...':
+                            this.rocabroteText = '¿QUÉ ME HAS...?';
+                            this.options = ['...', 'Salir'];
                             break;
                         case '¿Cómo me puedes ayudar?':
                             this.rocabroteText = 'Puedo darte consejos y guiarte en tu viaje.';
@@ -376,7 +433,7 @@
                             break;
                         case 'Mi espada es más que suficiente':
                             this.rocabroteText = 'No subestimes a tus enemigos, viajero. La sabiduría es tu mejor arma.';
-                            this.options = ['¿Qué debo hacer ahora?', 'Gracias'];
+                            this.options = ['¿Qué debo hacer ahora?', 'Prefiero otro arma', 'Gracias'];
                             break;
                         case '¿Tienes algo para mí?':
                             this.rocabroteText = 'A juzgar por tu mirada, necesitas algo más que una espada. Adelante, te doy a elegir.';
@@ -409,15 +466,79 @@
                             this.options = ['Salir'];
                             break;
                         case 'Salir':
-                            this.rocabroteText = '¿Necesitas algo más?';
-                            this.options = ['Prefiero otro arma', 'Cuéntame más sobre Arvandor', 'Salir'];
+                          
+                            if (this.glitched) {
+                                this.rocabrote.setScale(1);
+                                this.rocabroteText = 'Ahora soy minúsculo, estarás contento, ¿no?';
+                                this.options = ['¿Me puedes dar algún arma?', 'Salir'];
+
+                            }
+
+                            else {
+                                this.rocabroteText = '¿Necesitas algo más?';
+                                this.options = ['Prefiero otro arma', 'Cuéntame más sobre Arvandor', 'Salir'];
+                            }
+
                             this.endConversation();
                             return;
                             break;
 
+                        case '¿Me puedes dar algún arma?':
+                            this.rocabroteText = '¡Claro! ¿Te refieres a las armas que has encogido por romper el juego? ¡Elige!';
+                            this.options = ['Mini lanza', 'Mini arco', 'Mini escudo', 'Mejor me quedo con mi espada'];
+                            break;
+
+                        case 'Mejor me quedo con mi espada':
+                            this.rocabroteText = '¡Ni de coña! ¡Ahora eliges!';
+                            this.options = ['Mini lanza', 'Mini arco', 'Mini escudo', 'Mejor me quedo con mi espada'];
+                            break;
+
+                        case 'Mini lanza':
+                            this.rocabroteText = '¡Aquí tienes tu mini lanza! ¡Que te sea útil!';
+                            this.options = ['Gracias', 'Adiós'];
+                            this.changeWeapon('spear_anim');
+                            this.weapon = 'spear';
+                            break;
+
+                        case 'Mini arco':
+                            this.rocabroteText = '¡Aquí tienes tu mini arco! ¡Que te sea útil!';
+                            this.options = ['Gracias', 'Adiós'];
+                            this.changeWeapon('bow_anim');
+                            this.weapon = 'bow';
+                            break;
+
+                        case 'Mini escudo':
+                            this.rocabroteText = '¡Aquí tienes tu mini escudo! ¡Que te sea útil!';
+                            this.options = ['Esto no es Fortnite', '¿Gracias?'];
+                            break;
+
+                        case 'Esto no es Fortnite':
+                            this.rocabroteText = '¡Pues vaya! ¡Aquí tienes tu mini escudo! ¡Que te sea útil!';
+                            this.options = ['Gracias', 'Adiós'];
+                            this.changeWeapon('shield_anim');
+                            this.weapon = 'shield';
+                            break;
+
+                        case '¿Gracias?':
+                            this.rocabroteText = '¡De nada! ¡Que te sea útil!';
+                            this.options = ['Salir'];
+                            break;
+
+                        case 'Cuéntame más sobre Arvandor':
+                            this.rocabroteText = 'Arvandor es un lugar mágico y antiguo, lleno de secretos y peligros.';
+                            this.options = ['¿Es peligroso?', '¿Qué puedo hacer aquí?', 'Salir'];
+                            break;
+
                         case 'Prefiero otro arma':
                             this.rocabroteText = 'Sin problema. ¿Qué prefieres?';
-                            this.options = ['Lanza', 'Escudo', 'Arco'];
+                            this.options = ['Lanza', 'Escudo', 'Arco', 'Con mi espada será suficiente'];
+                            break;
+
+                        case 'Con mi espada será suficiente':
+                            this.rocabroteText = 'Como quieras, viajero. Que tengas un buen viaje.';
+                            this.options = ['Salir'];
+                            this.changeWeapon('idle');
+                            this.weapon = 'sword';
                             break;
                         default:
                             this.rocabroteText = 'No entiendo tu pregunta.';
@@ -426,8 +547,6 @@
                     }
 
                     this.rocabroteTextBox.setText(this.rocabroteText);
-
-
                     this.enableDragAndDrop();
 
                 });
@@ -451,6 +570,7 @@
             }
 
             endConversation() {
+
                 this.rocabroteTextBox.destroy();
                 this.optionTexts.forEach(optionText => optionText.destroy());
                 this.optionTexts = [];
