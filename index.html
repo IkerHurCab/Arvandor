@@ -182,8 +182,6 @@
                 rocabrote.setScale(scaleFactorRocabrote);
                 exclamation.setScale(exclamationScaleFactor / 17);
 
-                main_character.setCollideWorldBounds(true);
-                rocabrote.setCollideWorldBounds(true);
 
                 rocabrote.play('rocabrote_anim');
                 main_character.play('idle_anim');
@@ -241,6 +239,10 @@
                     yoyo: true,
                     repeat: -1
                 });
+
+                this.cameras.main.startFollow(this.main_character);
+                this.physics.world.setBounds(0, 0, 2000, window.innerHeight);
+                this.cameras.main.setBounds(0, 0, 2000, window.innerHeight);
             }
 
             //función obsoleta por ahora
@@ -318,7 +320,6 @@
                         duration: 500,
                         ease: 'Power2'
                     });
-
 
                     this.input.setDraggable(optionText);
                     this.optionTexts.push(optionText);
@@ -651,14 +652,24 @@
                                 this.main_character.play('running_anim');
                                 break;
                             case 'spear':
-                                this.main_character.play('spear_running_anim');
+                                // this.main_character.play('spear_running_anim');
                                 break;
                             case 'bow':
-                                this.main_character.play('bow_running_anim');
+                                // this.main_character.play('bow_running_anim');
                                 break;
                             case 'shield':
-                                this.main_character.play('shield_running_anim');
+                                // this.main_character.play('shield_running_anim');
                                 break;
+                            case 'mini_spear':
+                                // this.main_character.play('idle_mini_spear_anim');
+                                break;
+                            case 'mini_sword':
+                                // this.main_character.play('idle_mini_sword_anim');
+                                break;
+                            case 'mini_shield':
+                                // this.main_character.play('idle_mini_shield_anim');
+                                break;
+
                         }
                     }
 
