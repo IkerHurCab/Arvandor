@@ -49,12 +49,14 @@
             preload() {
                 this.load.image('exclamation', 'images/exclamation.png');
                 this.load.spritesheet('idle', 'images/idle.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('idle_mini_sword', 'images/idle_mini_sword.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('rocabrote', 'images/rocabrote.png', { frameWidth: 32, frameHeight: 50 });
                 this.load.image('background', 'images/background.jpg');
                 this.load.image('ground', 'images/ground.png');
                 this.load.image('rocabroteface', 'images/rocabroteface.png');
                 this.load.image('playerface', 'images/playerface.png');
                 this.load.spritesheet('idle_spear', 'images/idle_spear.png', { frameWidth: 50, frameHeight: 32 });
+                this.load.spritesheet('idle_mini_spear', 'images/idle_mini_spear.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('idle_bow', 'images/idle_bow.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('idle_shield', 'images/idle_shield.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.image('heart', 'images/heart.png');
@@ -82,6 +84,13 @@
                 this.anims.create({
                     key: 'spear_anim',
                     frames: this.anims.generateFrameNumbers('idle_spear', { start: 0, end: -1 }),
+                    frameRate: 4,
+                    repeat: -1
+                });
+
+                this.anims.create({
+                    key: 'idle_mini_spear_anim',
+                    frames: this.anims.generateFrameNumbers('idle_mini_spear', { start: 0, end: -1 }),
                     frameRate: 4,
                     repeat: -1
                 });
@@ -124,6 +133,13 @@
                 this.anims.create({
                     key: 'shield_running_anim',
                     frames: this.anims.generateFrameNumbers('shield_running', { start: 0, end: -1 }),
+                    frameRate: 4,
+                    repeat: -1
+                });
+
+                this.anims.create({
+                    key: 'idle_mini_sword_anim',
+                    frames: this.anims.generateFrameNumbers('idle_mini_sword', { start: 0, end: -1 }),
                     frameRate: 4,
                     repeat: -1
                 });
@@ -466,7 +482,7 @@
                             this.options = ['Salir'];
                             break;
                         case 'Salir':
-                          
+
                             if (this.glitched) {
                                 this.rocabrote.setScale(1);
                                 this.rocabroteText = 'Ahora soy minúsculo, estarás contento, ¿no?';
@@ -490,14 +506,14 @@
 
                         case 'Mejor me quedo con mi espada':
                             this.rocabroteText = '¡Ni de coña! ¡Ahora eliges!';
-                            this.options = ['Mini lanza', 'Mini arco', 'Mini escudo', 'Mejor me quedo con mi espada'];
+                            this.options = ['Mini lanza', 'Mini arco', 'Mini escudo', '¿Puedes encoger mi espada?', 'Mejor me quedo con mi espada'];
                             break;
 
                         case 'Mini lanza':
                             this.rocabroteText = '¡Aquí tienes tu mini lanza! ¡Que te sea útil!';
                             this.options = ['Gracias', 'Adiós'];
-                            this.changeWeapon('spear_anim');
-                            this.weapon = 'spear';
+                            this.changeWeapon('idle_mini_spear_anim');
+                            this.weapon = 'mini_spear';
                             break;
 
                         case 'Mini arco':
@@ -510,6 +526,13 @@
                         case 'Mini escudo':
                             this.rocabroteText = '¡Aquí tienes tu mini escudo! ¡Que te sea útil!';
                             this.options = ['Esto no es Fortnite', '¿Gracias?'];
+                            break;
+
+                        case '¿Puedes encoger mi espada?':
+                            this.rocabroteText = '¡Pues claro! De lo contrario, el creador del juego no habría puesto esta opción.';
+                            this.options = ['Gracias', 'Adiós'];
+                            this.changeWeapon('idle_mini_sword_anim');
+                            this.weapon = 'mini_sword';
                             break;
 
                         case 'Esto no es Fortnite':
@@ -654,6 +677,20 @@
                                 this.main_character.play('shield_anim');
                             }
                             break;
+
+                        case 'mini_spear':
+                            if (this.main_character.anims.currentAnim.key !== 'idle_mini_spear_anim') {
+                                console.log('mini spear');
+                                this.main_character.play('idle_mini_spear_anim');
+                            }
+                            break;
+
+                        case 'mini_sword':
+                            if (this.main_character.anims.currentAnim.key !== 'idle_mini_sword_anim') {
+                                console.log('mini sword');
+                                this.main_character.play('idle_mini_sword_anim');
+                            }
+                            break;
                     }
 
                 }
@@ -665,12 +702,20 @@
                     this.exclamation.setVisible(false);
                 }
 
-                if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC)) && this.inAction) {
-                    this.inAction = false;
-                    this.rocabroteTextBox.destroy();
-                    this.optionTexts.forEach(optionText => optionText.destroy());
 
+
+                if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC))) {
+                    if (this.inAction) {
+                        this.inAction = false;
+                        this.rocabroteTextBox.destroy();
+                        this.optionTexts.forEach(optionText => optionText.destroy());
+                    } else {
+                        this.scene.launch('PauseScene');
+                        this.scene.pause(this.scene.key);
+                    }
                 }
+
+
                 this.hideExclamation();
 
                 if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.H))) {
@@ -679,11 +724,33 @@
             }
         }
 
+        class PauseScene extends Phaser.Scene {
+            constructor() {
+                super({ key: 'PauseScene' });
+            }
+
+            create() {
+                this.add.text(
+                    window.innerWidth / 2,
+                    window.innerHeight / 2,
+                    'Pausa',
+                    { font: '64px Arial', fill: '#ffffff' }
+                ).setOrigin(0.5);
+            }
+
+            update() {
+                if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC))) {
+                    this.scene.resume('Arvandor');
+                    this.scene.stop();
+                }
+            }
+        }
+
         const config = {
             type: Phaser.AUTO,
             width: window.innerWidth,
             height: window.innerHeight,
-            scene: Arvandor,
+            scene: [Arvandor, PauseScene],
             physics: {
                 default: 'arcade',
                 arcade: {
@@ -700,8 +767,8 @@
         };
 
         const game = new Phaser.Game(config);
-    </script>
 
+    </script>
 </body>
 
 </html>
