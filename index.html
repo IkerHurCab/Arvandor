@@ -64,6 +64,7 @@
                 this.load.spritesheet('spear_running', 'images/spear_running.png', { frameWidth: 50, frameHeight: 32 });
                 this.load.spritesheet('bow_running', 'images/bow_running.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('shield_running', 'images/shield_running.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('idle_mini_shield', 'images/idle_mini_shield.png', { frameWidth: 32, frameHeight: 32 });
 
             }
 
@@ -143,6 +144,15 @@
                     frameRate: 4,
                     repeat: -1
                 });
+
+                this.anims.create({
+                    key: 'idle_mini_shield_anim',
+                    frames: this.anims.generateFrameNumbers('idle_mini_shield', { start: 0, end: -1 }),
+                    frameRate: 4,
+                    repeat: -1
+                });
+
+                
             }
 
             createScenario() {
@@ -289,7 +299,10 @@
 
                 if (this.optionTexts) {
                     this.optionTexts.forEach(optionText => optionText.destroy());
+                    
+                    
                 }
+
                 this.optionTexts = [];
 
                 this.options.forEach((opt, idx) => {
@@ -506,7 +519,7 @@
 
                         case 'Mejor me quedo con mi espada':
                             this.rocabroteText = '¡Ni de coña! ¡Ahora eliges!';
-                            this.options = ['Mini lanza', 'Mini arco', 'Mini escudo', '¿Puedes encoger mi espada?', 'Mejor me quedo con mi espada'];
+                            this.options = ['Mini lanza', 'Mini arco', 'Mini escudo', '¿Puedes encoger mi espada?'];
                             break;
 
                         case 'Mini lanza':
@@ -526,6 +539,8 @@
                         case 'Mini escudo':
                             this.rocabroteText = '¡Aquí tienes tu mini escudo! ¡Que te sea útil!';
                             this.options = ['Esto no es Fortnite', '¿Gracias?'];
+                            this.changeWeapon('idle_mini_shield_anim');
+                            this.weapon = 'mini_shield';
                             break;
 
                         case '¿Puedes encoger mi espada?':
@@ -538,8 +553,6 @@
                         case 'Esto no es Fortnite':
                             this.rocabroteText = '¡Pues vaya! ¡Aquí tienes tu mini escudo! ¡Que te sea útil!';
                             this.options = ['Gracias', 'Adiós'];
-                            this.changeWeapon('shield_anim');
-                            this.weapon = 'shield';
                             break;
 
                         case '¿Gracias?':
@@ -689,6 +702,13 @@
                             if (this.main_character.anims.currentAnim.key !== 'idle_mini_sword_anim') {
                                 console.log('mini sword');
                                 this.main_character.play('idle_mini_sword_anim');
+                            }
+                            break;
+
+                        case 'mini_shield':
+                            if (this.main_character.anims.currentAnim.key !== 'idle_mini_shield_anim') {
+                                console.log('mini shield');
+                                this.main_character.play('idle_mini_shield_anim');
                             }
                             break;
                     }
