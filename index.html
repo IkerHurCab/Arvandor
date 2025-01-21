@@ -162,7 +162,7 @@
                 const groundWidth = this.textures.get('ground').getSourceImage().width;
 
 
-                for (let i = 0; i < 5; i++) {
+                for (let i = 0; i < 20; i++) {
                     this.platforms.create(i * 425, window.innerHeight - 32, 'ground').setScale(0.5).refreshBody();
                 }
             }
@@ -229,6 +229,7 @@
                 const heartSpacing = 50;
                 for (let i = 0; i < this.lives; i++) {
                     const heart = this.add.image(30 + i * heartSpacing, 30, 'heart').setScale(0.05).setOrigin(0.5, 0.5);
+                    heart.setScrollFactor(0); 
                     this.hearts.push(heart);
                 }
 
@@ -240,9 +241,8 @@
                     repeat: -1
                 });
 
-                this.cameras.main.startFollow(this.main_character);
+                this.cameras.main.startFollow(this.main_character, true, 0.05, 0.05);
                 this.physics.world.setBounds(0, 0, 2000, window.innerHeight);
-                this.cameras.main.setBounds(0, 0, 2000, window.innerHeight);
             }
 
             //función obsoleta por ahora
@@ -309,17 +309,10 @@
 
                 this.options.forEach((opt, idx) => {
 
-
-                    const optionText = this.add.text(0, 100 + (idx * 60), opt,
+                    const optionText = this.add.text(this.cameras.main.scrollX + 100, this.cameras.main.scrollY + 100 + (idx * 60), opt,
                         { font: '16px', fontFamily: '"Press Start 2P"', fill: '#000000', backgroundColor: '#ffffff', padding: { x: 10, y: 5 } }
                     ).setInteractive();
 
-                    this.tweens.add({
-                        targets: optionText,
-                        x: 100,
-                        duration: 500,
-                        ease: 'Power2'
-                    });
 
                     this.input.setDraggable(optionText);
                     this.optionTexts.push(optionText);
@@ -336,8 +329,8 @@
                     optionText.on('dragend', (pointer, dragX, dragY, dropped) => {
                         if (!dropped) {
                             optionText.setAlpha(1);
-                            optionText.x = 100;
-                            optionText.y = 100 + (idx * 60);
+                            optionText.x = this.cameras.main.scrollX + 100;
+                            optionText.y = this.cameras.main.scrollY + 100 + (idx * 60);
                         }
                     });
                 });
@@ -393,6 +386,7 @@
 
                             if (this.glitch > 3) {
                                 this.glitched = true;
+                                this.rocabrote.y -= this.rocabrote.height * 2;
                                 this.rocabrote.setScale(20);
                                 this.rocabroteTextBox.setStyle({
                                     backgroundColor: '#000000',
@@ -592,7 +586,7 @@
             startConversation() {
                 this.inAction = true;
                 this.exclamation.setVisible(false);
-                const rocabroteTextBox = this.add.text(window.innerWidth / 2, window.innerHeight / 4, this.rocabroteText, {
+                const rocabroteTextBox = this.add.text(this.cameras.main.scrollX + window.innerWidth / 2, this.cameras.main.scrollY + window.innerHeight / 4, this.rocabroteText, {
                     font: '16px',
                     fontFamily: '"Press Start 2P"',
                     fill: '#000000',
