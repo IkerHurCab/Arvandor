@@ -43,6 +43,7 @@
                 this.isAlive = true;
                 this.isMoving = false;
                 this.isRunning = false;
+                this.isAttacking = false;
                 this.glitch = 0;
                 this.glitched = false;
             }
@@ -65,6 +66,7 @@
                 this.load.spritesheet('bow_running', 'images/bow_running.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('shield_running', 'images/shield_running.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('idle_mini_shield', 'images/idle_mini_shield.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('sword_attack_anim', 'images/sword_attack_anim.png', { frameWidth: 40, frameHeight: 32 });
 
             }
 
@@ -79,7 +81,8 @@
                     key: 'idle_anim',
                     frames: this.anims.generateFrameNumbers('idle', { start: 0, end: -1 }),
                     frameRate: 4,
-                    repeat: -1
+                    repeat: -1,
+                    origin: { x: 0.5, y: 0.5 }
                 });
 
                 this.anims.create({
@@ -152,19 +155,42 @@
                     repeat: -1
                 });
 
-                
+                this.anims.create({
+                    key: 'sword_attack_anim',
+                    frames: this.anims.generateFrameNumbers('sword_attack_anim', { start: 0, end: 3 }),
+                    frameRate: 20,
+                    repeat: 0,
+                    origin: { x: 0.5, y: 0.5 }
+                });
+
+
             }
 
             createScenario() {
-                this.add.image(0, 0, 'background').setOrigin(0, 0).setDisplaySize(window.innerWidth, window.innerHeight);
+                const graphics = this.add.graphics();
+                graphics.fillStyle(0x0000ff, 1);
+                graphics.fillStyle(0x87CEEB, 1);
+                graphics.fillRect(-2000, 0, 15000, 15000);
 
+                this.leftWall = this.physics.add.staticGroup();
+                this.leftWall.create(-100, window.innerHeight / 2, 'ground').setScale(0.1, window.innerHeight).refreshBody();
+                this.leftWall.setVisible(false);
                 this.platforms = this.physics.add.staticGroup();
                 const groundWidth = this.textures.get('ground').getSourceImage().width;
 
-
-                for (let i = 0; i < 20; i++) {
-                    this.platforms.create(i * 425, window.innerHeight - 32, 'ground').setScale(0.5).refreshBody();
+                for (let i = -5; i < 15; i++) {
+                    this.platforms.create(i * 425, window.innerHeight - 32, 'ground').setScale(0.7).refreshBody();
                 }
+
+
+            }
+
+            attack() {
+                this.isAttacking = true;
+                this.main_character.play('sword_attack_anim').on('animationcomplete', () => {
+                    this.isAttacking = false;
+                });
+
             }
 
             createAssets() {
@@ -179,6 +205,8 @@
                 const exclamationScaleFactor = window.innerHeight / exclamation.height;
 
                 main_character.setScale(scaleFactor);
+                main_character.setOrigin(0.5, 0.5);
+                this.physics.add.collider(main_character, this.leftWall);
                 rocabrote.setScale(scaleFactorRocabrote);
                 exclamation.setScale(exclamationScaleFactor / 17);
 
@@ -229,7 +257,7 @@
                 const heartSpacing = 50;
                 for (let i = 0; i < this.lives; i++) {
                     const heart = this.add.image(30 + i * heartSpacing, 30, 'heart').setScale(0.05).setOrigin(0.5, 0.5);
-                    heart.setScrollFactor(0); 
+                    heart.setScrollFactor(0);
                     this.hearts.push(heart);
                 }
 
@@ -301,8 +329,8 @@
 
                 if (this.optionTexts) {
                     this.optionTexts.forEach(optionText => optionText.destroy());
-                    
-                    
+
+
                 }
 
                 this.optionTexts = [];
@@ -670,52 +698,55 @@
                 } else {
                     this.main_character.setVelocityX(0);
                     this.isMoving = false;
-                    switch (this.weapon) {
-                        case 'sword':
-                            if (this.main_character.anims.currentAnim.key !== 'idle_anim') {
-                                console.log('sword');
-                                this.main_character.play('idle_anim');
-                            }
-                            break;
-                        case 'spear':
-                            if (this.main_character.anims.currentAnim.key !== 'spear_anim') {
-                                console.log('spear');
-                                this.main_character.play('spear_anim');
-                            }
-                            break;
-                        case 'bow':
-                            if (this.main_character.anims.currentAnim.key !== 'bow_anim') {
-                                console.log('bow');
-                                this.main_character.play('bow_anim');
-                            }
-                            break;
-                        case 'shield':
-                            if (this.main_character.anims.currentAnim.key !== 'shield_anim') {
-                                console.log('shield');
-                                this.main_character.play('shield_anim');
-                            }
-                            break;
 
-                        case 'mini_spear':
-                            if (this.main_character.anims.currentAnim.key !== 'idle_mini_spear_anim') {
-                                console.log('mini spear');
-                                this.main_character.play('idle_mini_spear_anim');
-                            }
-                            break;
+                    if (!this.isAttacking) {
+                        switch (this.weapon) {
+                            case 'sword':
+                                if (this.main_character.anims.currentAnim.key !== 'idle_anim') {
+                                    console.log('sword');
+                                    this.main_character.play('idle_anim');
+                                }
+                                break;
+                            case 'spear':
+                                if (this.main_character.anims.currentAnim.key !== 'spear_anim') {
+                                    console.log('spear');
+                                    this.main_character.play('spear_anim');
+                                }
+                                break;
+                            case 'bow':
+                                if (this.main_character.anims.currentAnim.key !== 'bow_anim') {
+                                    console.log('bow');
+                                    this.main_character.play('bow_anim');
+                                }
+                                break;
+                            case 'shield':
+                                if (this.main_character.anims.currentAnim.key !== 'shield_anim') {
+                                    console.log('shield');
+                                    this.main_character.play('shield_anim');
+                                }
+                                break;
 
-                        case 'mini_sword':
-                            if (this.main_character.anims.currentAnim.key !== 'idle_mini_sword_anim') {
-                                console.log('mini sword');
-                                this.main_character.play('idle_mini_sword_anim');
-                            }
-                            break;
+                            case 'mini_spear':
+                                if (this.main_character.anims.currentAnim.key !== 'idle_mini_spear_anim') {
+                                    console.log('mini spear');
+                                    this.main_character.play('idle_mini_spear_anim');
+                                }
+                                break;
 
-                        case 'mini_shield':
-                            if (this.main_character.anims.currentAnim.key !== 'idle_mini_shield_anim') {
-                                console.log('mini shield');
-                                this.main_character.play('idle_mini_shield_anim');
-                            }
-                            break;
+                            case 'mini_sword':
+                                if (this.main_character.anims.currentAnim.key !== 'idle_mini_sword_anim') {
+                                    console.log('mini sword');
+                                    this.main_character.play('idle_mini_sword_anim');
+                                }
+                                break;
+
+                            case 'mini_shield':
+                                if (this.main_character.anims.currentAnim.key !== 'idle_mini_shield_anim') {
+                                    console.log('mini shield');
+                                    this.main_character.play('idle_mini_shield_anim');
+                                }
+                                break;
+                        }
                     }
 
                 }
@@ -726,6 +757,12 @@
                     this.startConversation();
                     this.exclamation.setVisible(false);
                 }
+
+                if (this.input.activePointer.isDown && this.input.activePointer.leftButtonDown()) {
+                    this.attack();
+                }
+
+
 
 
 
