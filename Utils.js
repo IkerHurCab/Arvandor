@@ -17,12 +17,17 @@ class Utils {
 
     static line(scene, positionX, positionY, length, horizontal = false) {
         const platform = new Plataforma(scene, 'single_platform', 18, 18);
-
         if (horizontal) {
             platform.createGrid(500 + 54 * positionX, window.innerHeight - 54 * positionY, 1, length, 3);
         } else {
             platform.createGrid(500 + 54 * positionX, window.innerHeight - 54 * positionY, length, 1, 3);
         }
+        scene.platforms.push(platform.getPlatforms());
+    }
+
+    static rectangle(scene, positionX, positionY, width, height) {
+        const platform = new Plataforma(scene, 'single_platform', 18, 18);
+        platform.createGrid(500 + 54 * positionX, window.innerHeight - 54 * positionY, width, height, 3);
         scene.platforms.push(platform.getPlatforms());
     }
 }
