@@ -24,14 +24,18 @@
 
 <body>
 
-    <script>
-
-
+    <script type="module">
+        import Enemigo from './Enemigo.js';
+        import Plataforma from './Plataforma.js';
+        import Utils from './Utils.js';
         class Arvandor extends Phaser.Scene {
 
             constructor() {
                 super('Arvandor');
                 this.weapon = 'sword';
+                this.currentIdleAnim = 'idle_anim';
+                this.currentRunningAnim = 'running_anim';
+                this.currentAttackAnim = 'sword_attack_anim';
                 this.currentIndex = 0;
                 this.playerText = '';
                 this.rocabroteText = 'Buenas, viajero. ¿Qué te trae por aquí?';
@@ -46,6 +50,7 @@
                 this.isAttacking = false;
                 this.glitch = 0;
                 this.glitched = false;
+                this.speed = 300;
             }
             preload() {
                 this.load.image('exclamation', 'images/exclamation.png');
@@ -54,6 +59,7 @@
                 this.load.spritesheet('rocabrote', 'images/rocabrote.png', { frameWidth: 32, frameHeight: 50 });
                 this.load.image('background', 'images/background.jpg');
                 this.load.image('ground', 'images/ground.png');
+                this.load.image('single_platform', 'images/single_platform.png');
                 this.load.image('rocabroteface', 'images/rocabroteface.png');
                 this.load.image('playerface', 'images/playerface.png');
                 this.load.spritesheet('idle_spear', 'images/idle_spear.png', { frameWidth: 50, frameHeight: 32 });
@@ -67,7 +73,7 @@
                 this.load.spritesheet('shield_running', 'images/shield_running.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('idle_mini_shield', 'images/idle_mini_shield.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('sword_attack_anim', 'images/sword_attack_anim.png', { frameWidth: 40, frameHeight: 32 });
-
+                this.load.spritesheet('enemy_pig_walk', 'images/enemy_pig_walk.png', { frameWidth: 18, frameHeight: 18 });
             }
 
             createAnimations() {
@@ -158,13 +164,16 @@
                 this.anims.create({
                     key: 'sword_attack_anim',
                     frames: this.anims.generateFrameNumbers('sword_attack_anim', { start: 0, end: 3 }),
-                    frameRate: 20,
-                    repeat: 0,
-                    origin: { x: 0.5, y: 0.5 }
+                    frameRate: 10,
+                    repeat: 0
                 });
 
 
+
             }
+
+
+
 
             createScenario() {
                 const graphics = this.add.graphics();
@@ -175,30 +184,26 @@
                 this.leftWall = this.physics.add.staticGroup();
                 this.leftWall.create(-100, window.innerHeight / 2, 'ground').setScale(0.1, window.innerHeight).refreshBody();
                 this.leftWall.setVisible(false);
-                this.platforms = this.physics.add.staticGroup();
-                const groundWidth = this.textures.get('ground').getSourceImage().width;
 
-                for (let i = -5; i < 15; i++) {
-                    this.platforms.create(i * 425, window.innerHeight - 32, 'ground').setScale(0.7).refreshBody();
-                }
+                const ground = new Plataforma(this, 'ground', 425, 32);
+                ground.createGrid(-5 * 425, window.innerHeight, 1, 20, 1); 
+                this.ground = ground.getPlatforms();
 
+                this.platforms = [];
 
+                Utils.staircase(this, 3, 1, 5, 1, false);
+                Utils.staircase(this, 10, 1, 5, 1, true);
+                // Utils.line(this, 1, 2, 2, false);
             }
 
-            attack() {
-                this.isAttacking = true;
-                this.main_character.play('sword_attack_anim').on('animationcomplete', () => {
-                    this.isAttacking = false;
-                });
 
-            }
 
             createAssets() {
                 const exclamation = this.add.sprite(0, 0, 'exclamation').setVisible(false);
                 this.exclamation = exclamation;
 
-                const main_character = this.physics.add.sprite(50, window.innerHeight - 10 - this.platforms.getChildren()[0].displayHeight, 'idle');
-                const rocabrote = this.physics.add.sprite(window.innerWidth - 500, window.innerHeight - this.platforms.getChildren()[0].displayHeight - 25, 'rocabrote');
+                const main_character = this.physics.add.sprite(50, window.innerHeight - 10 - this.ground.getChildren()[0].displayHeight, 'idle');
+                const rocabrote = this.physics.add.sprite(window.innerWidth - 500, window.innerHeight - this.ground.getChildren()[0].displayHeight - 25, 'rocabrote');
 
                 const scaleFactor = window.innerHeight * 0.15 / main_character.height;
                 const scaleFactorRocabrote = window.innerHeight * 0.2 / rocabrote.height;
@@ -207,26 +212,56 @@
                 main_character.setScale(scaleFactor);
                 main_character.setOrigin(0.5, 0.5);
                 this.physics.add.collider(main_character, this.leftWall);
+                this.physics.add.collider(main_character, this.ground);
+                this.platforms.forEach(platform => {
+                    this.physics.add.collider(main_character, platform);
+                });
                 rocabrote.setScale(scaleFactorRocabrote);
                 exclamation.setScale(exclamationScaleFactor / 17);
 
 
                 rocabrote.play('rocabrote_anim');
-                main_character.play('idle_anim');
                 this.main_character = main_character;
+                this.main_character.play(this.currentIdleAnim);
                 this.rocabrote = rocabrote;
 
-                main_character.setDepth(1);
+                this.main_character.setDepth(1);
+
+                this.enemies_pig = [];
+                for (let i = 0; i < 5; i++) {
+                    const enemyPig = new Enemigo(this, Phaser.Math.Between(100, 500), window.innerHeight - 300, 'enemy_pig_walk', 100, 'pig');
+                    enemyPig.create();
+                    enemyPig.play('enemy_pig_anim');
+                    enemyPig.setScale(4);
+                    enemyPig.setBounce(0);
+                    this.enemies_pig.push(enemyPig);
+                    this.physics.add.collider(enemyPig, this.ground);
+                    this.platforms.forEach(platform => {
+                        this.physics.add.collider(enemyPig, platform);
+                    });
+                    
+                }
+
+
+
             }
 
             createHitBoxes() {
                 if (!this.inAction) {
                     this.physics.add.overlap(this.main_character, this.rocabrote, this.showExclamation, null, this);
+                    // this.enemies_pig.forEach(enemyPig => {
+                    //     this.physics.add.overlap(this.main_character, enemyPig, () => {
+                    //         this.loseLife(1);
+                    //     }, null, this);
+                    // });
                 } else {
                     this.exclamation.setVisible(false);
                 }
-                this.physics.add.collider(this.main_character, this.platforms);
-                this.physics.add.collider(this.rocabrote, this.platforms);
+                this.physics.add.collider(this.main_character, this.ground);
+                this.platforms.forEach(platform => {
+                    this.physics.add.collider(this.main_character, platform);
+                });
+                this.physics.add.collider(this.rocabrote, this.ground);
             }
 
             showExclamation() {
@@ -317,10 +352,28 @@
             }
 
             gameOver() {
-                this.add.text(window.innerWidth / 2, window.innerHeight / 2, 'Test', {
-                    font: '64px Arial',
-                    fill: '#ff0000'
+                const gameOverText = this.add.text(this.cameras.main.scrollX + window.innerWidth / 2, this.cameras.main.scrollY + window.innerHeight / 2, 'Game Over', {
+                    font: '64px "Press Start 2P"',
+                    fill: '#ff0000',
+                    stroke: '#000000',
+                    strokeThickness: 8,
+                    shadow: {
+                        offsetX: 5,
+                        offsetY: 5,
+                        color: '#000000',
+                        blur: 10,
+                        stroke: true,
+                        fill: true
+                    }
                 }).setOrigin(0.5);
+                gameOverText.setDepth(1000);
+                this.tweens.add({
+                    targets: gameOverText,
+                    scale: { from: 1, to: 1.2 },
+                    duration: 500,
+                    yoyo: true,
+                    repeat: -1
+                });
                 this.scene.pause();
             }
 
@@ -429,8 +482,6 @@
                                     }
                                 });
 
-
-
                                 this.rocabroteText = 'OAWIJDOIAHDOPIABUABIUBWAIUGFIUOABIUCBIUAWDADUASIDAIPWDGA';
                                 this.options = ['???', '???', '???'];
                             } else {
@@ -496,18 +547,27 @@
                             this.options = ['Gracias', 'Adiós'];
                             this.changeWeapon('spear_anim');
                             this.weapon = 'spear';
+                            this.currentIdleAnim = 'idle_spear';
+                            this.currentRunningAnim = 'spear_running_anim';
+                            this.currentAttackAnim = 'spear_attack_anim';
                             break;
                         case 'Escudo':
                             this.rocabroteText = 'Con este escudo podrás protegerte de los ataques enemigos. Te irá bien en tu viaje.';
                             this.options = ['Gracias', 'Adiós'];
                             this.changeWeapon('shield_anim');
                             this.weapon = 'shield';
+                            this.currentIdleAnim = 'idle_shield_anim';
+                            this.currentRunningAnim = 'shield_running_anim';
+                            this.currentAttackAnim = 'shield_attack_anim';
                             break;
                         case 'Arco':
                             this.rocabroteText = 'Con este arco podrás atacar a tus enemigos desde la distancia. Buena elección.';
                             this.options = ['Gracias', 'Adiós'];
                             this.changeWeapon('bow_anim');
                             this.weapon = 'bow';
+                            this.currentIdleAnim = 'idle_bow_anim';
+                            this.currentRunningAnim = 'bow_running_anim';
+                            this.currentAttackAnim = 'bow_attack_anim';
                             break;
                         case 'Gracias':
                             this.rocabroteText = 'De nada, viajero. Que tengas un buen viaje.';
@@ -550,6 +610,9 @@
                             this.options = ['Gracias', 'Adiós'];
                             this.changeWeapon('idle_mini_spear_anim');
                             this.weapon = 'mini_spear';
+                            this.currentIdleAnim = 'idle_mini_spear_anim';
+                            this.currentRunningAnim = 'idle_mini_spear_anim';
+                            this.currentAttackAnim = 'idle_mini_spear_anim';
                             break;
 
                         case 'Mini arco':
@@ -557,6 +620,9 @@
                             this.options = ['Gracias', 'Adiós'];
                             this.changeWeapon('bow_anim');
                             this.weapon = 'bow';
+                            this.currentIdleAnim = 'idle_bow_anim';
+                            this.currentRunningAnim = 'bow_running_anim';
+                            this.currentAttackAnim = 'bow_attack_anim';
                             break;
 
                         case 'Mini escudo':
@@ -564,6 +630,9 @@
                             this.options = ['Esto no es Fortnite', '¿Gracias?'];
                             this.changeWeapon('idle_mini_shield_anim');
                             this.weapon = 'mini_shield';
+                            this.currentIdleAnim = 'idle_mini_shield_anim';
+                            this.currentRunningAnim = 'idle_mini_shield_anim';
+                            this.currentAttackAnim = 'idle_mini_shield_anim';
                             break;
 
                         case '¿Puedes encoger mi espada?':
@@ -636,122 +705,77 @@
                 this.inAction = false;
             }
 
+            pauseGame() {
+                this.scene.launch('PauseScene');
+                this.scene.pause(this.scene.key);
+            }
 
-            update() {
-                const speed = 300;
+            stopCharacter() {
+                this.main_character.setVelocityX(0);
+                if (!this.isAttacking && this.main_character.body.touching.down && this.isMoving) {
+                    this.isMoving = false;
+                    console.log(this.currentIdleAnim);
+                    this.main_character.play(this.currentIdleAnim);
 
-                if ((this.cursors.left.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) && !this.inAction) {
-                    this.main_character.setVelocityX(-speed);
+                }
+            }
+
+            run(direction) {
+                if (direction === 'left') {
+                    this.main_character.setVelocityX(-this.speed);
                     this.main_character.flipX = true;
 
                     if (!this.isMoving) {
                         this.isMoving = true;
-                        switch (this.weapon) {
-                            case 'sword':
-                                this.main_character.play('running_anim');
-                                break;
-                            case 'spear':
-                                this.main_character.play('spear_running_anim');
-                                break;
-                            case 'bow':
-                                this.main_character.play('bow_running_anim');
-                                break;
-                            case 'shield':
-                                this.main_character.play('shield_running_anim');
-                                break;
-                        }
+                        this.main_character.play(this.currentRunningAnim);
                     }
-
-                } else if ((this.cursors.right.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D).isDown) && !this.inAction) {
-
-                    this.main_character.setVelocityX(speed);
+                } else {
+                    this.main_character.setVelocityX(this.speed);
                     this.main_character.flipX = false;
 
                     if (!this.isMoving) {
                         this.isMoving = true;
-                        switch (this.weapon) {
-                            case 'sword':
-                                this.main_character.play('running_anim');
-                                break;
-                            case 'spear':
-                                // this.main_character.play('spear_running_anim');
-                                break;
-                            case 'bow':
-                                // this.main_character.play('bow_running_anim');
-                                break;
-                            case 'shield':
-                                // this.main_character.play('shield_running_anim');
-                                break;
-                            case 'mini_spear':
-                                // this.main_character.play('idle_mini_spear_anim');
-                                break;
-                            case 'mini_sword':
-                                // this.main_character.play('idle_mini_sword_anim');
-                                break;
-                            case 'mini_shield':
-                                // this.main_character.play('idle_mini_shield_anim');
-                                break;
-
-                        }
+                        this.main_character.play(this.currentRunningAnim);
                     }
+                }
+            }
+
+            playCurrentStateAnimation() {
+                if (this.isRunning) {
+                    this.main_character.play(this.currentRunningAnim);
+                } else if (this.isMoving) {
+                    this.main_character.play(this.currentIdleAnim);
+                } else {
+                    this.stopCharacter();
+                }
+            }
+
+            jump() {
+                this.main_character.setVelocityY(-this.speed * 2);
+            }
+
+            attack() {
+                this.isAttacking = true;
+                this.main_character.play(this.currentAttackAnim).on('animationcomplete', () => {
+                    this.isAttacking = false;
+                    this.playCurrentStateAnimation();
+
+                });
+            }
+
+            update() {
+                if ((this.cursors.left.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) && !this.inAction) {
+                    this.run('left');
+
+                } else if ((this.cursors.right.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D).isDown) && !this.inAction) {
+                    this.run('right');
 
                 } else {
-                    this.main_character.setVelocityX(0);
-                    this.isMoving = false;
-
-                    if (!this.isAttacking) {
-                        switch (this.weapon) {
-                            case 'sword':
-                                if (this.main_character.anims.currentAnim.key !== 'idle_anim') {
-                                    console.log('sword');
-                                    this.main_character.play('idle_anim');
-                                }
-                                break;
-                            case 'spear':
-                                if (this.main_character.anims.currentAnim.key !== 'spear_anim') {
-                                    console.log('spear');
-                                    this.main_character.play('spear_anim');
-                                }
-                                break;
-                            case 'bow':
-                                if (this.main_character.anims.currentAnim.key !== 'bow_anim') {
-                                    console.log('bow');
-                                    this.main_character.play('bow_anim');
-                                }
-                                break;
-                            case 'shield':
-                                if (this.main_character.anims.currentAnim.key !== 'shield_anim') {
-                                    console.log('shield');
-                                    this.main_character.play('shield_anim');
-                                }
-                                break;
-
-                            case 'mini_spear':
-                                if (this.main_character.anims.currentAnim.key !== 'idle_mini_spear_anim') {
-                                    console.log('mini spear');
-                                    this.main_character.play('idle_mini_spear_anim');
-                                }
-                                break;
-
-                            case 'mini_sword':
-                                if (this.main_character.anims.currentAnim.key !== 'idle_mini_sword_anim') {
-                                    console.log('mini sword');
-                                    this.main_character.play('idle_mini_sword_anim');
-                                }
-                                break;
-
-                            case 'mini_shield':
-                                if (this.main_character.anims.currentAnim.key !== 'idle_mini_shield_anim') {
-                                    console.log('mini shield');
-                                    this.main_character.play('idle_mini_shield_anim');
-                                }
-                                break;
-                        }
-                    }
-
+                    this.stopCharacter();
                 }
+
                 if ((this.cursors.up.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE).isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown) && this.main_character.body.touching.down && !this.inAction) {
-                    this.main_character.setVelocityY(-speed);
+                    this.jump();
                 }
                 if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER)) && this.action && !this.inAction) {
                     this.startConversation();
@@ -759,12 +783,10 @@
                 }
 
                 if (this.input.activePointer.isDown && this.input.activePointer.leftButtonDown()) {
-                    this.attack();
+                    if (!this.inAction && !this.isAttacking) {
+                        this.attack();
+                    }
                 }
-
-
-
-
 
                 if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC))) {
                     if (this.inAction) {
@@ -772,11 +794,9 @@
                         this.rocabroteTextBox.destroy();
                         this.optionTexts.forEach(optionText => optionText.destroy());
                     } else {
-                        this.scene.launch('PauseScene');
-                        this.scene.pause(this.scene.key);
+                        this.pauseGame();
                     }
                 }
-
 
                 this.hideExclamation();
 
