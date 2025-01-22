@@ -5,7 +5,6 @@ class Enemigo extends Phaser.Physics.Arcade.Sprite {
         this.type = type;
         scene.add.existing(this);
         scene.physics.add.existing(this);
-        this.setCollideWorldBounds(true);
     }
     
     createAnimations() {
@@ -19,7 +18,6 @@ class Enemigo extends Phaser.Physics.Arcade.Sprite {
 
     create() {
         this.createAnimations(); 
-
         switch (this.type) {
             case 'pig':
                 this.setTexture('enemy_pig_walk');
