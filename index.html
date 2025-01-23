@@ -28,11 +28,13 @@
         import Plataforma from './resources/Plataforma.js';
         import Utils from './resources/Utils.js';
         import EnemyUtils from './resources/EnemyUtils.js';
+        import Moneda from './resources/Moneda.js';
         class Arvandor extends Phaser.Scene {
 
             constructor() {
                 super('Arvandor');
                 this.weapon = 'sword';
+                this.weaponX = 0;
                 this.currentIdleAnim = 'idle_anim';
                 this.currentRunningAnim = 'running_anim';
                 this.currentAttackAnim = 'sword_attack_anim';
@@ -53,6 +55,7 @@
                 this.glitched = false;
                 this.speed = 300;
                 this.invincible = false;
+                this.coinCount = 0;
             }
             preload() {
                 this.load.image('exclamation', 'images/exclamation.png');
@@ -76,6 +79,7 @@
                 this.load.spritesheet('idle_mini_shield', 'images/main_character/idle_mini_shield.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('sword_attack_anim', 'images/main_character/sword_attack_anim.png', { frameWidth: 40, frameHeight: 32 });
                 this.load.spritesheet('enemy_pig', 'images/enemy_pig.png', { frameWidth: 18, frameHeight: 18 });
+                this.load.spritesheet('coin', 'images/miscellaneous/coin.png', { frameWidth: 18, frameHeight: 18 });
 
                 this.load.spritesheet('single_lava_top', 'images/textures/single_lava.png', { frameWidth: 18, frameHeight: 18 });
                 this.load.spritesheet('single_lava_middle', 'images/textures/single_lava_middle.png', { frameWidth: 18, frameHeight: 18 });
@@ -92,6 +96,10 @@
 
                 this.load.image('single_stone', 'images/textures/single_stone.png');
                 this.load.image('single_brick', 'images/textures/single_brick.png');
+                this.load.image('single_wood', 'images/textures/single_wood.png');
+
+                //armas
+                this.load.image('gancho', 'images/gadgets/grappling_hook.png');
             }
 
             createAnimations() {
@@ -243,6 +251,25 @@
                 Utils.rectangle(this, 'single_platform', 87, -5, 1, 2);
                 Utils.rectangle(this, 'single_platform', 89, -4, 1, 1);
                 Utils.rectangle(this, 'single_platform', 90, -3, 1, 6);
+
+                Utils.rectangle(this, 'single_platform', 50, 5, 3, 2);
+                Utils.rectangle(this, 'single_platform', 55, 8, 2, 4);
+                Utils.staircase(this, 'single_platform', 60, 1, 7, 1, false);
+                Utils.rectangle(this, 'single_platform', 70, 10, 1, 3);
+                Utils.rectangle(this, 'single_platform', 75, 12, 1, 2);
+                Utils.rectangle(this, 'single_platform', 80, 14, 1, 1);
+                Utils.rectangle(this, 'single_platform', 85, 16, 1, 1);
+                Utils.rectangle(this, 'single_platform', 90, 18, 1, 1);
+                Utils.rectangle(this, 'single_platform', 95, 20, 1, 1);
+                Utils.rectangle(this, 'single_platform', 100, 22, 1, 1);
+                Utils.rectangle(this, 'single_platform', 105, 24, 1, 1);
+                Utils.rectangle(this, 'single_platform', 110, 26, 1, 1);
+                Utils.rectangle(this, 'single_platform', 115, 28, 1, 1);
+                Utils.rectangle(this, 'single_platform', 120, 30, 1, 1);
+                Utils.rectangle(this, 'single_platform', 125, 32, 1, 1);
+                Utils.rectangle(this, 'single_platform', 130, 34, 1, 1);
+                Utils.rectangle(this, 'single_platform', 135, 36, 1, 1);
+                Utils.rectangle(this, 'single_platform', 140, 38, 1, 1);
                 
 
 
@@ -253,7 +280,7 @@
                 const exclamation = this.add.sprite(0, 0, 'exclamation').setVisible(false);
                 this.exclamation = exclamation;
 
-                const main_character = this.physics.add.sprite(500 + 54 * 71, window.innerHeight - 100, 'idle');
+                const main_character = this.physics.add.sprite(500, window.innerHeight - 100, 'idle');
                 const rocabrote = this.physics.add.sprite(500 + 54 * 26, window.innerHeight - 54 * 20, 'rocabrote');
 
                 main_character.setScale(2.5);
@@ -276,14 +303,49 @@
                 this.main_character.setDepth(1);
 
                 this.enemies_pig = [];
+                this.coins = [];
                 EnemyUtils.pig(this, 500 + 54 * 18, window.innerHeight - 54);
                 EnemyUtils.pig(this, 500 + 54 * 56, window.innerHeight - 54);
 
 
+                const coinIcon = this.add.image(30, 70, 'coin', 0).setScale(2).setOrigin(0.5, 0.5);
+                coinIcon.setScrollFactor(0);
 
+                const coinText = this.add.text(60, 60, `x${this.coinCount}`, {
+                    font: '32px "Press Start 2P"',
+                    fill: '#ffffff'
+                }).setOrigin(0, 0.25);
+                coinText.setScrollFactor(0);
 
+                this.coinText = coinText;
 
+                this.coins.forEach(coin => {
+                    coin.body.setAllowGravity(false);
+                    coin.body.setImmovable(true);
+                });
 
+                this.physics.add.overlap(this.main_character, this.coins, (main_character, coin) => {
+                    coin.destroy();
+                    this.coinCount += 1;
+                    this.coinText.setText(`x${this.coinCount}`);
+                });
+
+                const gancho = this.add.image(this.main_character.x + 26, this.main_character.y, 'gancho').setScale(2);
+                this.weaponX = this.main_character.x + 26;
+                this.gancho = gancho;
+                this.gancho.setDepth(1);
+
+                Moneda.moneda(this, 15, 7);
+                Moneda.moneda(this, 16, 7);
+                Moneda.moneda(this, 20, 9);
+                Moneda.moneda(this, 21, 9);
+                Moneda.moneda(this, 37, 7);
+                Moneda.moneda(this, 38, 7);
+                Moneda.moneda(this, 39, 7);
+                Moneda.moneda(this, 40, 7);
+                Moneda.moneda(this, 41, 7);
+                Moneda.moneda(this, 42, 7);
+                
             }
 
             createHitBoxes() {
@@ -801,7 +863,7 @@
                     this.main_character.setVelocityX(-this.speed);
                     this.main_character.flipX = true;
 
-                    if (!this.isMoving) {
+                    if (!this.isMoving && !this.isAttacking) {
                         this.isMoving = true;
                         this.main_character.play(this.currentRunningAnim);
                     }
@@ -809,7 +871,7 @@
                     this.main_character.setVelocityX(this.speed);
                     this.main_character.flipX = false;
 
-                    if (!this.isMoving) {
+                    if (!this.isMoving && !this.isAttacking) {
                         this.isMoving = true;
                         this.main_character.play(this.currentRunningAnim);
                     }
@@ -841,6 +903,8 @@
 
             update() {
                 if (this.main_character.y > 1500) {
+                    this.input.keyboard.enabled = false;
+                    this.input.mouse.enabled = false;
                     this.cameras.main.stopFollow();
 
                     this.time.delayedCall(1000, () => {
@@ -848,9 +912,13 @@
                     });
                 }
                 if ((this.cursors.left.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) && !this.inAction) {
+                    this.gancho.flipX = true;
+                    this.weaponX = this.main_character.x - 26;
                     this.run('left');
 
                 } else if ((this.cursors.right.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D).isDown) && !this.inAction) {
+                    this.gancho.flipX = false;
+                    this.weaponX = this.main_character.x + 26;
                     this.run('right');
 
                 } else {
@@ -882,7 +950,7 @@
                 }
 
                 this.hideExclamation();
-
+                this.gancho.setPosition(this.weaponX, this.main_character.y + 20);
                 this.enemies_pig.forEach(enemyPig => {
                     if (enemyPig.active) {
                         enemyPig.update();
