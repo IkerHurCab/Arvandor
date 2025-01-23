@@ -25,13 +25,13 @@ class Utils {
         scene.platforms.push(platform.getPlatforms());
     }
 
-    static rectangle(scene, texture,positionX, positionY, width, height) {
+    static rectangle(scene, texture, positionX, positionY, width, height) {
         const platform = new Plataforma(scene, texture, 18, 18);
         platform.createGrid(500 + 54 * positionX, window.innerHeight - 54 * positionY, width, height, 3);
         scene.platforms.push(platform.getPlatforms());
     }
 
-    static unfilledRectangle(scene, texture,positionX, positionY, width, height) {
+    static unfilledRectangle(scene, texture, positionX, positionY, width, height) {
         const platform = new Plataforma(scene, texture, 18, 18);
 
         platform.createGrid(500 + 54 * positionX, window.innerHeight - 54 * positionY, 1, width, 3);
@@ -68,6 +68,44 @@ class Utils {
         scene.platforms.push(platformIni.getPlatforms());
         scene.platforms.push(platformEnd.getPlatforms());
     }
+
+    static lava(scene, positionX, positionY, height, width, group = scene.lavaGroup) {
+        const platformTop = new Plataforma(scene, 'single_lava_top', 18, 18);
+        const platformMiddle = new Plataforma(scene, 'single_lava_middle', 18, 18);
+
+        for (let i = 0; i < height; i++) {
+            if (i == height - 1) {
+                platformTop.createGrid(500 + 54 * positionX, window.innerHeight - 54 * (positionY + i), 1, width, 3);
+                group.addMultiple(platformTop.getPlatforms().getChildren());
+            } else {
+                platformMiddle.createGrid(500 + 54 * positionX, window.innerHeight - 54 * (positionY + i), 1, width, 3);
+                group.addMultiple(platformMiddle.getPlatforms().getChildren());
+            }
+        }
+
+        scene.anims.create({
+            key: 'lava_top_anim',
+            frames: scene.anims.generateFrameNumbers('single_lava_top', { start: 0, end: -1 }),
+            frameRate: 1,
+            repeat: -1
+        });
+
+        scene.anims.create({
+            key: 'lava_middle_anim',
+            frames: scene.anims.generateFrameNumbers('single_lava_middle', { start: 0, end: -1 }),
+            frameRate: 1,
+            repeat: -1
+        });
+
+        group.children.iterate(child => {
+            if (child.texture.key === 'single_lava_top') {
+                child.play('lava_top_anim');
+            } else if (child.texture.key === 'single_lava_middle') {
+                child.play('lava_middle_anim');
+            }
+        });
+    }
+    
 }
 
 export default Utils;

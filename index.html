@@ -27,6 +27,7 @@
         import Enemigo from './resources/Enemigo.js';
         import Plataforma from './resources/Plataforma.js';
         import Utils from './resources/Utils.js';
+        import EnemyUtils from './resources/EnemyUtils.js';
         class Arvandor extends Phaser.Scene {
 
             constructor() {
@@ -47,43 +48,50 @@
                 this.isMoving = false;
                 this.isRunning = false;
                 this.isAttacking = false;
+                this.isBurning = false;
                 this.glitch = 0;
                 this.glitched = false;
                 this.speed = 300;
+                this.invincible = false;
             }
             preload() {
                 this.load.image('exclamation', 'images/exclamation.png');
-                this.load.spritesheet('idle', 'images/idle.png', { frameWidth: 32, frameHeight: 32 });
-                this.load.spritesheet('idle_mini_sword', 'images/idle_mini_sword.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('idle', 'images/main_character/idle.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('idle_mini_sword', 'images/main_character/idle_mini_sword.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('rocabrote', 'images/rocabrote.png', { frameWidth: 32, frameHeight: 50 });
                 this.load.image('background', 'images/background.jpg');
                 this.load.image('ground', 'images/ground.png');
-                this.load.image('single_platform', 'images/single_platform.png');
-                this.load.image('rocabroteface', 'images/rocabroteface.png');
-                this.load.image('playerface', 'images/playerface.png');
-                this.load.spritesheet('idle_spear', 'images/idle_spear.png', { frameWidth: 50, frameHeight: 32 });
-                this.load.spritesheet('idle_mini_spear', 'images/idle_mini_spear.png', { frameWidth: 32, frameHeight: 32 });
-                this.load.spritesheet('idle_bow', 'images/idle_bow.png', { frameWidth: 32, frameHeight: 32 });
-                this.load.spritesheet('idle_shield', 'images/idle_shield.png', { frameWidth: 32, frameHeight: 32 });
+
+                // this.load.image('rocabroteface', 'images/rocabroteface.png');
+                // this.load.image('playerface', 'images/playerface.png');
+                this.load.spritesheet('idle_spear', 'images/main_character/idle_spear.png', { frameWidth: 50, frameHeight: 32 });
+                this.load.spritesheet('idle_mini_spear', 'images/main_character/idle_mini_spear.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('idle_bow', 'images/main_character/idle_bow.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('idle_shield', 'images/main_character/idle_shield.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.image('heart', 'images/heart.png');
-                this.load.spritesheet('running', 'images/running.png', { frameWidth: 32, frameHeight: 32 });
-                this.load.spritesheet('spear_running', 'images/spear_running.png', { frameWidth: 50, frameHeight: 32 });
-                this.load.spritesheet('bow_running', 'images/bow_running.png', { frameWidth: 32, frameHeight: 32 });
-                this.load.spritesheet('shield_running', 'images/shield_running.png', { frameWidth: 32, frameHeight: 32 });
-                this.load.spritesheet('idle_mini_shield', 'images/idle_mini_shield.png', { frameWidth: 32, frameHeight: 32 });
-                this.load.spritesheet('sword_attack_anim', 'images/sword_attack_anim.png', { frameWidth: 40, frameHeight: 32 });
-                this.load.spritesheet('enemy_pig_walk', 'images/enemy_pig_walk.png', { frameWidth: 18, frameHeight: 18 });
+                this.load.spritesheet('running', 'images/main_character/running.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('spear_running', 'images/main_character/spear_running.png', { frameWidth: 50, frameHeight: 32 });
+                this.load.spritesheet('bow_running', 'images/main_character/bow_running.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('shield_running', 'images/main_character/shield_running.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('idle_mini_shield', 'images/main_character/idle_mini_shield.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('sword_attack_anim', 'images/main_character/sword_attack_anim.png', { frameWidth: 40, frameHeight: 32 });
+                this.load.spritesheet('enemy_pig', 'images/enemy_pig.png', { frameWidth: 18, frameHeight: 18 });
 
-                this.load.image('single_grass_full', 'images/single_grass_full.png');
-                this.load.image('single_grass_middle', 'images/single_grass_middle.png');
-                this.load.image('single_grass_left', 'images/single_grass_left.png');
-                this.load.image('single_grass_right', 'images/single_grass_right.png');
-              //  this.load.image('single_dirt_full', 'images/single_dirt_full.png');
-                this.load.image('single_dirt_middle', 'images/single_dirt_middle.png');
-                this.load.image('single_dirt_left', 'images/single_dirt_left.png');
-                this.load.image('single_dirt_right', 'images/single_dirt_right.png');
+                this.load.spritesheet('single_lava_top', 'images/textures/single_lava.png', { frameWidth: 18, frameHeight: 18 });
+                this.load.spritesheet('single_lava_middle', 'images/textures/single_lava_middle.png', { frameWidth: 18, frameHeight: 18 });
 
-                this.load.image('single_stone', 'images/single_stone.png');
+                this.load.image('single_platform', 'images/textures/single_platform.png');
+                this.load.image('single_grass_full', 'images/textures/single_grass_full.png');
+                this.load.image('single_grass_middle', 'images/textures/single_grass_middle.png');
+                this.load.image('single_grass_left', 'images/textures/single_grass_left.png');
+                this.load.image('single_grass_right', 'images/textures/single_grass_right.png');
+                //  this.load.image('single_dirt_full', 'images/textures/single_dirt_full.png');
+                this.load.image('single_dirt_middle', 'images/textures/single_dirt_middle.png');
+                this.load.image('single_dirt_left', 'images/textures/single_dirt_left.png');
+                this.load.image('single_dirt_right', 'images/textures/single_dirt_right.png');
+
+                this.load.image('single_stone', 'images/textures/single_stone.png');
+                this.load.image('single_brick', 'images/textures/single_brick.png');
             }
 
             createAnimations() {
@@ -178,8 +186,6 @@
                     repeat: 0
                 });
 
-
-
             }
 
 
@@ -195,44 +201,60 @@
                 this.leftWall.create(-100, window.innerHeight / 2, 'ground').setScale(0.1, window.innerHeight).refreshBody();
                 this.leftWall.setVisible(false);
 
-                // const ground1 = new Plataforma(this, 'single_grass_middle', 18, 18);
-                // ground1.createGrid(500 - 54 * 100, window.innerHeight, 1, 107, 3);
-                // this.ground1 = ground1.getPlatforms();
-
-                // const ground2 = new Plataforma(this, 'single_grass_right', 18, 18);
-                // ground2.createGrid(500 + 54 * 7, window.innerHeight, 1, 1, 3);
-                // this.ground2 = ground2.getPlatforms();
-
                 this.platforms = [];
 
+                //castillico porque para nada esto es un plagio clarísimo a cierto juego de Nintendo
+                Utils.rectangle(this, 'single_brick', -24, 6, 1, 1);
+                Utils.rectangle(this, 'single_brick', -22, 6, 1, 1);
+                Utils.rectangle(this, 'single_brick', -20, 6, 1, 1);
+                Utils.rectangle(this, 'single_brick', -18, 6, 1, 1);
+                Utils.rectangle(this, 'single_brick', -24, 5, 3, 7);
+                Utils.rectangle(this, 'single_brick', -24, 5, 3, 7);
+                Utils.rectangle(this, 'single_brick', -20, 2, 2, 3);
+                Utils.rectangle(this, 'single_brick', -24, 2, 2, 3);
+                //generación de todo el mapa
                 Utils.staircase(this, 'single_platform', 3, 1, 5, 1, false);
+                this.lavaGroup = this.physics.add.staticGroup();
+                Utils.lava(this, 8, -9, 10, 3);
                 Utils.staircase(this, 'single_platform', 10, 1, 5, 1, true);
-                Utils.rectangle(this, 'single_platform', 1, 2, 2, 1);
                 Utils.rectangle(this, 'single_platform', 15, 7, 1, 2);
                 Utils.rectangle(this, 'single_platform', 20, 9, 1, 2);
                 Utils.rectangle(this, 'single_platform', 25, 11, 1, 2);
                 Utils.rectangle(this, 'single_platform', 37, 7, 1, 6);
                 Utils.grass(this, -100, -20, 21, 108);
                 Utils.grass(this, 11, -20, 21, 10);
-                Utils.grass(this, 19, -12, 14, 10);
-                Utils.grass(this, 32, -12, 14, 3);
-                Utils.grass(this, 32, -12, 15, 3);
-                Utils.grass(this, 38, -16, 11, 3);
+                Utils.grass(this, 19, -22, 24, 10);
+                Utils.grass(this, 32, -22, 24, 3);
+                Utils.grass(this, 32, -22, 25, 3);
+                Utils.grass(this, 38, -26, 21, 3);
                 Utils.rectangle(this, 'single_stone', 40, -1, 1, 3);
                 Utils.grass(this, 40, 0, 2, 3);
-            
+                Utils.rectangle(this, 'single_platform', 48, -3, 1, 6);
+
+                Utils.grass(this, 54, -22, 19, 10);
+                Utils.rectangle(this, 'single_platform', 64, -3, 1, 6);
+                Utils.rectangle(this, 'single_platform', 75, -1, 1, 10);
+                Utils.rectangle(this, 'single_platform', 79, 7, 8, 2);
+                Utils.rectangle(this, 'single_platform', 70, -4, 1, 1);
+                Utils.rectangle(this, 'single_platform', 71, -5, 1, 2);
+                Utils.rectangle(this, 'single_platform', 73, -6, 1, 4);
+                Utils.rectangle(this, 'single_platform', 77, -7, 1, 6);
+                Utils.rectangle(this, 'single_platform', 83, -6, 1, 4);
+                Utils.rectangle(this, 'single_platform', 87, -5, 1, 2);
+                Utils.rectangle(this, 'single_platform', 89, -4, 1, 1);
+                Utils.rectangle(this, 'single_platform', 90, -3, 1, 6);
+                
+
+
+
             }
 
             createAssets() {
                 const exclamation = this.add.sprite(0, 0, 'exclamation').setVisible(false);
                 this.exclamation = exclamation;
 
-                const main_character = this.physics.add.sprite(500, window.innerHeight - 100, 'idle');
-                const rocabrote = this.physics.add.sprite(500 + 54 * (26), window.innerHeight - 54 * 20, 'rocabrote');
-
-
-
-
+                const main_character = this.physics.add.sprite(500 + 54 * 71, window.innerHeight - 100, 'idle');
+                const rocabrote = this.physics.add.sprite(500 + 54 * 26, window.innerHeight - 54 * 20, 'rocabrote');
 
                 main_character.setScale(2.5);
                 main_character.setOrigin(0.5, 0.5);
@@ -254,19 +276,11 @@
                 this.main_character.setDepth(1);
 
                 this.enemies_pig = [];
-                for (let i = 0; i < 5; i++) {
-                    const enemyPig = new Enemigo(this, 1500 + 500 * i, window.innerHeight - 300, 'enemy_pig_walk', 100, 'pig');
-                    enemyPig.create();
-                    enemyPig.play('enemy_pig_anim');
-                    enemyPig.setScale(4);
+                EnemyUtils.pig(this, 500 + 54 * 18, window.innerHeight - 54);
+                EnemyUtils.pig(this, 500 + 54 * 56, window.innerHeight - 54);
 
-                    this.enemies_pig.push(enemyPig);
-                    this.physics.add.collider(enemyPig, this.ground1);
-                    this.platforms.forEach(platform => {
-                        this.physics.add.collider(enemyPig, platform);
-                    });
 
-                }
+
 
 
 
@@ -275,19 +289,24 @@
             createHitBoxes() {
                 if (!this.inAction) {
                     this.physics.add.overlap(this.main_character, this.rocabrote, this.showExclamation, null, this);
-                    // this.enemies_pig.forEach(enemyPig => {
-                    //     this.physics.add.overlap(this.main_character, enemyPig, () => {
-                    //         this.loseLife(1);
-                    //     }, null, this);
-                    // });
                 } else {
                     this.exclamation.setVisible(false);
                 }
-                this.physics.add.collider(this.main_character, this.ground1);
+
                 this.platforms.forEach(platform => {
                     this.physics.add.collider(this.main_character, platform);
                 });
-                this.physics.add.collider(this.rocabrote, this.ground1);
+
+                this.physics.add.overlap(this.main_character, this.lavaGroup, this.touchLava, null, this);
+
+            }
+
+            touchLava() {
+                if (!this.invincible) {
+                    this.isBurning = true;
+                    this.loseLife(1);
+                    this.main_character.setVelocityY(-this.speed * 2.5);
+                }
             }
 
             showExclamation() {
@@ -372,8 +391,36 @@
                         return;
                     }
 
+                    this.invincible = true;
+
+                    if (this.isBurning) {
+                        this.isBurning = false;
+                        this.main_character.setTint(0xff0000);
+
+
+                        this.time.delayedCall(1500, () => {
+                            this.main_character.clearTint();
+                            this.invincible = false;
+                        }, [], this);
+
+                        return;
+                    }
+
+                    this.time.addEvent({
+                        delay: 100,
+                        repeat: 15,
+                        callback: () => {
+                            this.main_character.setVisible(!this.main_character.visible);
+                        }
+                    });
+
+
+                    this.time.delayedCall(1500, () => {
+                        this.invincible = false;
+                    }, [], this);
 
                     this.animateHearts();
+
                 }
             }
 
@@ -744,7 +791,6 @@
                 this.main_character.setVelocityX(0);
                 if (!this.isAttacking && this.main_character.body.touching.down && this.isMoving) {
                     this.isMoving = false;
-                    console.log(this.currentIdleAnim);
                     this.main_character.play(this.currentIdleAnim);
 
                 }
@@ -794,6 +840,13 @@
             }
 
             update() {
+                if (this.main_character.y > 1500) {
+                    this.cameras.main.stopFollow();
+
+                    this.time.delayedCall(1000, () => {
+                        this.loseLife(1000);
+                    });
+                }
                 if ((this.cursors.left.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) && !this.inAction) {
                     this.run('left');
 
@@ -830,9 +883,13 @@
 
                 this.hideExclamation();
 
-                if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.H))) {
-                    this.loseLife(1);
-                }
+                this.enemies_pig.forEach(enemyPig => {
+                    if (enemyPig.active) {
+                        enemyPig.update();
+                    }
+                });
+
+
             }
         }
 
