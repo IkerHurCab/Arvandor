@@ -35,11 +35,6 @@
                 super('Arvandor');
                 this.weapon = 'sword';
                 this.weaponX = 0;
-                this.currentIdleAnim = 'idle_anim';
-                this.currentRunningAnim = 'running_anim';
-                this.currentAttackAnim = 'sword_attack_anim';
-                this.currentIndex = 0;
-                this.playerText = '';
                 this.rocabroteText = 'Buenas, viajero. ¿Qué te trae por aquí?';
                 this.options = ['¿Quién eres?', '¿Dónde estoy?', '¿Qué haces aquí?'];
                 this.inAction = false;
@@ -48,7 +43,7 @@
                 this.hearts = [];
                 this.isAlive = true;
                 this.isMoving = false;
-                this.isRunning = false;
+                this.isJumping = false;
                 this.isAttacking = false;
                 this.isBurning = false;
                 this.glitch = 0;
@@ -56,6 +51,9 @@
                 this.speed = 300;
                 this.invincible = false;
                 this.coinCount = 0;
+                this.currentWeapon;
+                this.weaponOverlap = null;
+                this.isDefending = false;
             }
             preload() {
                 this.load.image('exclamation', 'images/exclamation.png');
@@ -73,6 +71,7 @@
                 this.load.spritesheet('idle_shield', 'images/main_character/idle_shield.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.image('heart', 'images/heart.png');
                 this.load.spritesheet('running', 'images/main_character/running.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.spritesheet('jumping', 'images/main_character/jumping.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('spear_running', 'images/main_character/spear_running.png', { frameWidth: 50, frameHeight: 32 });
                 this.load.spritesheet('bow_running', 'images/main_character/bow_running.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('shield_running', 'images/main_character/shield_running.png', { frameWidth: 32, frameHeight: 32 });
@@ -100,6 +99,13 @@
 
                 //armas
                 this.load.image('gancho', 'images/gadgets/grappling_hook.png');
+                this.load.image('espada', 'images/weapons/sword.png');
+                this.load.image('escudo', 'images/weapons/shield.png');
+                this.load.image('lanza', 'images/weapons/spear.png');
+                this.load.image('arco', 'images/weapons/bow.png');
+
+                //items
+                this.load.image('arrow', 'images/items/arrow.png');
             }
 
             createAnimations() {
@@ -148,6 +154,13 @@
                 this.anims.create({
                     key: 'running_anim',
                     frames: this.anims.generateFrameNumbers('running', { start: 0, end: -1 }),
+                    frameRate: 2,
+                    repeat: -1
+                });
+
+                this.anims.create({
+                    key: 'jumping_anim',
+                    frames: this.anims.generateFrameNumbers('jumping', { start: 0, end: -1 }),
                     frameRate: 4,
                     repeat: -1
                 });
@@ -270,8 +283,47 @@
                 Utils.rectangle(this, 'single_platform', 130, 34, 1, 1);
                 Utils.rectangle(this, 'single_platform', 135, 36, 1, 1);
                 Utils.rectangle(this, 'single_platform', 140, 38, 1, 1);
-                
 
+
+
+
+            }
+
+
+            createWeapons() {
+                const gancho = this.physics.add.image(this.main_character.x + 26, this.main_character.y, 'gancho').setScale(2).setVisible(false);
+                this.gancho = gancho;
+                this.gancho.setDepth(1);
+                this.gancho.body.setAllowGravity(false);
+                this.gancho.setImmovable(true);
+
+                const espada = this.physics.add.image(this.main_character.x + 26, this.main_character.y, 'espada').setScale(2).setVisible(false);
+                this.espada = espada;
+                this.espada.setDepth(1);
+                this.espada.body.setAllowGravity(false);
+                this.espada.setImmovable(true);
+
+                const lanza = this.physics.add.image(this.main_character.x + 26, this.main_character.y, 'lanza').setScale(5).setVisible(false);
+                this.lanza = lanza;
+                this.lanza.setDepth(1);
+                this.lanza.body.setAllowGravity(false);
+                this.lanza.setImmovable(true);
+
+                const escudo = this.physics.add.image(this.main_character.x + 26, this.main_character.y, 'escudo').setScale(2).setVisible(false);
+                this.escudo = escudo;
+                this.escudo.setDepth(1);
+                this.escudo.body.setAllowGravity(false);
+                this.escudo.setImmovable(true);
+
+                const arco = this.physics.add.image(this.main_character.x + 26, this.main_character.y, 'arco').setScale(3).setVisible(false);
+                this.arco = arco;
+                this.arco.setDepth(1);
+                this.arco.body.setAllowGravity(false);
+                this.arco.setImmovable(true);
+
+                this.currentWeapon = this.arco;
+                this.weapon = 'bow';
+                this.currentWeapon.setVisible(true);
 
 
             }
@@ -295,7 +347,8 @@
 
                 rocabrote.play('rocabrote_anim');
                 this.main_character = main_character;
-                this.main_character.play(this.currentIdleAnim);
+                this.weaponX = 26;
+                this.main_character.play('idle_anim');
                 this.rocabrote = rocabrote;
                 this.platforms.forEach(platform => {
                     this.physics.add.collider(this.rocabrote, platform);
@@ -312,9 +365,11 @@
                 coinIcon.setScrollFactor(0);
 
                 const coinText = this.add.text(60, 60, `x${this.coinCount}`, {
-                    font: '32px "Press Start 2P"',
+                    fontSize: '24px',
+                    fontFamily: '"Press Start 2P"',
                     fill: '#ffffff'
                 }).setOrigin(0, 0.25);
+
                 coinText.setScrollFactor(0);
 
                 this.coinText = coinText;
@@ -330,10 +385,7 @@
                     this.coinText.setText(`x${this.coinCount}`);
                 });
 
-                const gancho = this.add.image(this.main_character.x + 26, this.main_character.y, 'gancho').setScale(2);
-                this.weaponX = this.main_character.x + 26;
-                this.gancho = gancho;
-                this.gancho.setDepth(1);
+
 
                 Moneda.moneda(this, 15, 7);
                 Moneda.moneda(this, 16, 7);
@@ -345,7 +397,7 @@
                 Moneda.moneda(this, 40, 7);
                 Moneda.moneda(this, 41, 7);
                 Moneda.moneda(this, 42, 7);
-                
+
             }
 
             createHitBoxes() {
@@ -384,8 +436,94 @@
                 }
             }
 
-            changeWeapon(animationKey) {
-                this.main_character.play(animationKey);
+            controlWeaponState() {
+                switch (this.weapon) {
+                    case 'sword':
+                        this.isAttacking = this.input.activePointer.isDown;
+
+                        if (this.isAttacking) {
+                            this.weaponX = this.main_character.flipX ? -40 : 40;
+                            this.weaponOverlap = this.physics.add.overlap(
+                                this.currentWeapon,
+                                this.enemies_pig,
+                                (weapon, enemy) => {
+                                    enemy.getHit(2);
+                                },
+                                null,
+                                this
+                            );
+
+                        }
+
+                        else {
+                            this.weaponX = this.main_character.flipX ? -20 : 20;
+                            if (this.weaponOverlap) {
+                                this.physics.world.removeCollider(this.weaponOverlap);
+                            }
+                        }
+                        break;
+                    case 'shield':
+
+                        this.isDefending = this.input.activePointer.isDown;
+                        if (this.isDefending) {
+                            this.weaponX = this.main_character.flipX ? -40 : 40;
+                            this.currentWeapon.setScale(2.5);
+                        }
+
+                        else {
+                            this.weaponX = this.main_character.flipX ? -20 : 20;
+                            this.currentWeapon.setScale(2);
+                        }
+
+                        break;
+                    case 'spear':
+                        this.isAttacking = this.input.activePointer.isDown;
+
+                        if (this.isAttacking) {
+                            this.weaponX = this.main_character.flipX ? -50 : 50;
+                            this.weaponOverlap = this.physics.add.overlap(
+                                this.currentWeapon,
+                                this.enemies_pig,
+                                (weapon, enemy) => {
+                                    enemy.getHit(1);
+                                },
+                                null,
+                                this
+                            );
+
+                        }
+
+                        else {
+                            this.weaponX = this.main_character.flipX ? -20 : 20;
+                            if (this.weaponOverlap) {
+                                this.physics.world.removeCollider(this.weaponOverlap);
+                            }
+                        }
+
+                        break;
+                    case 'bow':
+                        this.isAttacking = this.input.activePointer.isDown;
+                        if (this.isAttacking) {
+                            this.throwArrow();
+                        }
+                        break;
+                }
+            }
+
+            throwArrow(){
+                const arrow = this.physics.add.image(this.main_character.x + this.weaponX, this.main_character.y + 20, 'arrow').setScale(3);
+                arrow.setVelocityX(this.main_character.flipX ? -500 : 500);
+                arrow.body.allowGravity = false;
+                this.physics.add.collider(arrow, this.enemies_pig, (arrow, enemy) => {
+                    enemy.getHit(1);
+                    arrow.destroy();
+                });
+            }
+
+            changeWeapon(weapon) {
+                this.currentWeapon.setVisible(false);
+                this.currentWeapon = this[weapon];
+                this.currentWeapon.setVisible(true);
             }
 
 
@@ -393,6 +531,7 @@
                 this.createScenario();
                 this.createAnimations();
                 this.createAssets();
+                this.createWeapons();
                 this.createHitBoxes();
                 this.cursors = this.input.keyboard.createCursorKeys();
 
@@ -458,10 +597,12 @@
                     if (this.isBurning) {
                         this.isBurning = false;
                         this.main_character.setTint(0xff0000);
+                        this.currentWeapon.setTint(0xff0000);
 
 
                         this.time.delayedCall(1500, () => {
                             this.main_character.clearTint();
+                            this.currentWeapon.clearTint();
                             this.invincible = false;
                         }, [], this);
 
@@ -488,7 +629,8 @@
 
             gameOver() {
                 const gameOverText = this.add.text(this.cameras.main.scrollX + window.innerWidth / 2, this.cameras.main.scrollY + window.innerHeight / 2, 'Game Over', {
-                    font: '64px "Press Start 2P"',
+                    fontSize: '64px',
+                    fontFamily: '"Press Start 2P"',
                     fill: '#ff0000',
                     stroke: '#000000',
                     strokeThickness: 8,
@@ -683,29 +825,23 @@
                         case 'Lanza':
                             this.rocabroteText = 'Con esta lanza podrás atacar a tus enemigos con mayor alcance. Buena elección.';
                             this.options = ['Gracias', 'Adiós'];
-                            this.changeWeapon('spear_anim');
+                            this.changeWeapon('lanza');
                             this.weapon = 'spear';
-                            this.currentIdleAnim = 'idle_spear';
-                            this.currentRunningAnim = 'spear_running_anim';
-                            this.currentAttackAnim = 'spear_attack_anim';
+
                             break;
                         case 'Escudo':
                             this.rocabroteText = 'Con este escudo podrás protegerte de los ataques enemigos. Te irá bien en tu viaje.';
                             this.options = ['Gracias', 'Adiós'];
-                            this.changeWeapon('shield_anim');
+                            this.changeWeapon('escudo');
                             this.weapon = 'shield';
-                            this.currentIdleAnim = 'idle_shield_anim';
-                            this.currentRunningAnim = 'shield_running_anim';
-                            this.currentAttackAnim = 'shield_attack_anim';
+
                             break;
                         case 'Arco':
                             this.rocabroteText = 'Con este arco podrás atacar a tus enemigos desde la distancia. Buena elección.';
                             this.options = ['Gracias', 'Adiós'];
-                            this.changeWeapon('bow_anim');
+                            this.changeWeapon('arco');
                             this.weapon = 'bow';
-                            this.currentIdleAnim = 'idle_bow_anim';
-                            this.currentRunningAnim = 'bow_running_anim';
-                            this.currentAttackAnim = 'bow_attack_anim';
+
                             break;
                         case 'Gracias':
                             this.rocabroteText = 'De nada, viajero. Que tengas un buen viaje.';
@@ -748,9 +884,7 @@
                             this.options = ['Gracias', 'Adiós'];
                             this.changeWeapon('idle_mini_spear_anim');
                             this.weapon = 'mini_spear';
-                            this.currentIdleAnim = 'idle_mini_spear_anim';
-                            this.currentRunningAnim = 'idle_mini_spear_anim';
-                            this.currentAttackAnim = 'idle_mini_spear_anim';
+
                             break;
 
                         case 'Mini arco':
@@ -758,9 +892,7 @@
                             this.options = ['Gracias', 'Adiós'];
                             this.changeWeapon('bow_anim');
                             this.weapon = 'bow';
-                            this.currentIdleAnim = 'idle_bow_anim';
-                            this.currentRunningAnim = 'bow_running_anim';
-                            this.currentAttackAnim = 'bow_attack_anim';
+
                             break;
 
                         case 'Mini escudo':
@@ -768,9 +900,7 @@
                             this.options = ['Esto no es Fortnite', '¿Gracias?'];
                             this.changeWeapon('idle_mini_shield_anim');
                             this.weapon = 'mini_shield';
-                            this.currentIdleAnim = 'idle_mini_shield_anim';
-                            this.currentRunningAnim = 'idle_mini_shield_anim';
-                            this.currentAttackAnim = 'idle_mini_shield_anim';
+
                             break;
 
                         case '¿Puedes encoger mi espada?':
@@ -851,57 +981,40 @@
 
             stopCharacter() {
                 this.main_character.setVelocityX(0);
-                if (!this.isAttacking && this.main_character.body.touching.down && this.isMoving) {
+                if (this.isMoving) {
                     this.isMoving = false;
-                    this.main_character.play(this.currentIdleAnim);
+                }
 
+                if (!this.inAir && this.main_character.anims.currentAnim.key !== 'idle_anim') {
+                    this.main_character.play('idle_anim');
                 }
             }
 
             run(direction) {
                 if (direction === 'left') {
+                    this.currentWeapon.flipX = true;
+                    this.weaponX = -26;
                     this.main_character.setVelocityX(-this.speed);
                     this.main_character.flipX = true;
-
-                    if (!this.isMoving && !this.isAttacking) {
-                        this.isMoving = true;
-                        this.main_character.play(this.currentRunningAnim);
-                    }
                 } else {
+                    this.currentWeapon.flipX = false;
+                    this.weaponX = 26;
                     this.main_character.setVelocityX(this.speed);
                     this.main_character.flipX = false;
-
-                    if (!this.isMoving && !this.isAttacking) {
-                        this.isMoving = true;
-                        this.main_character.play(this.currentRunningAnim);
-                    }
                 }
-            }
 
-            playCurrentStateAnimation() {
-                if (this.isRunning) {
-                    this.main_character.play(this.currentRunningAnim);
-                } else if (this.isMoving) {
-                    this.main_character.play(this.currentIdleAnim);
-                } else {
-                    this.stopCharacter();
+                if (!this.inAir && this.main_character.anims.currentAnim.key !== 'running_anim') {
+                    this.isMoving = true;
+                    this.main_character.play('running_anim');
                 }
+
             }
 
             jump() {
                 this.main_character.setVelocityY(-this.speed * 1.5);
             }
 
-            attack() {
-                this.isAttacking = true;
-                this.main_character.play(this.currentAttackAnim).on('animationcomplete', () => {
-                    this.isAttacking = false;
-                    this.playCurrentStateAnimation();
-
-                });
-            }
-
-            update() {
+            updateState() {
                 if (this.main_character.y > 1500) {
                     this.input.keyboard.enabled = false;
                     this.input.mouse.enabled = false;
@@ -911,16 +1024,26 @@
                         this.loseLife(1000);
                     });
                 }
+
+                if (this.main_character.body.touching.down) {
+                    this.inAir = false;
+                } else {
+                    this.inAir = true;
+                }
+
+                if (this.inAir && this.main_character.anims.currentAnim.key !== 'jumping_anim') {
+                    this.main_character.play('jumping_anim');
+                }
+            }
+
+            update() {
+
+                this.updateState();
+
                 if ((this.cursors.left.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) && !this.inAction) {
-                    this.gancho.flipX = true;
-                    this.weaponX = this.main_character.x - 26;
                     this.run('left');
-
                 } else if ((this.cursors.right.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D).isDown) && !this.inAction) {
-                    this.gancho.flipX = false;
-                    this.weaponX = this.main_character.x + 26;
                     this.run('right');
-
                 } else {
                     this.stopCharacter();
                 }
@@ -928,15 +1051,10 @@
                 if ((this.cursors.up.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE).isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown) && this.main_character.body.touching.down && !this.inAction) {
                     this.jump();
                 }
+
                 if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER)) && this.action && !this.inAction) {
                     this.startConversation();
                     this.exclamation.setVisible(false);
-                }
-
-                if (this.input.activePointer.isDown && this.input.activePointer.leftButtonDown()) {
-                    if (!this.inAction && !this.isAttacking) {
-                        this.attack();
-                    }
                 }
 
                 if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC))) {
@@ -949,15 +1067,20 @@
                     }
                 }
 
+                this.controlWeaponState()
+
+
                 this.hideExclamation();
-                this.gancho.setPosition(this.weaponX, this.main_character.y + 20);
+
+
+                this.currentWeapon.setPosition(this.main_character.x + this.weaponX, this.main_character.y + 20);
+
+
                 this.enemies_pig.forEach(enemyPig => {
                     if (enemyPig.active) {
                         enemyPig.update();
                     }
                 });
-
-
             }
         }
 

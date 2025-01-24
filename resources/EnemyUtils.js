@@ -15,25 +15,11 @@ class EnemyUtils {
         scene.physics.add.collider(scene.main_character, enemy, (main_character, enemyPig) => {
             if (main_character.y < enemyPig.y - 20 && !enemyPig.invincible) {
                 main_character.setVelocityY(-scene.speed);
-                enemyPig.health -= 1;
-                if (enemyPig.health <= 0) {
-                    enemyPig.destroy();
-                } else {
-                    enemyPig.invincible = true;
-                    scene.time.addEvent({
-                        delay: 100,
-                        repeat: 15,
-                        callback: () => {
-                            enemyPig.setVisible(!enemyPig.visible);
-                        }
-                    });
-
-                    scene.time.delayedCall(2000, () => {
-                        enemyPig.invincible = false;
-                        enemyPig.setVisible(true); 
-                    }, [], enemyPig);
-                }
-            } else if (!scene.invincible) {
+                enemyPig.getHit(1);
+            } else if (main_character.y < enemyPig.y - 20 && enemyPig.invincible) {
+                main_character.setVelocityY(-scene.speed);
+            }
+            else if (!scene.invincible && !scene.isDefending) {
                 scene.loseLife(1);
             }
         });
