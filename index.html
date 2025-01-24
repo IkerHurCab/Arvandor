@@ -105,6 +105,7 @@
                 this.load.image('escudo', 'images/weapons/shield.png');
                 this.load.image('lanza', 'images/weapons/spear.png');
                 this.load.image('arco', 'images/weapons/bow.png');
+                this.load.image('arco_vacio', 'images/weapons/empty_bow.png');
 
                 //items
                 this.load.image('arrow', 'images/items/arrow.png');
@@ -512,26 +513,37 @@
             }
 
             throwArrow() {
-                this.arrowCooldown = true;
-                const arrow = this.physics.add.image(this.main_character.x + this.weaponX, this.main_character.y + 20, 'arrow').setScale(3);
-                arrow.setVelocityX(this.main_character.flipX ? -500 : 500);
-                arrow.flipX = this.main_character.flipX;
-                arrow.body.allowGravity = false;
-                this.physics.add.collider(arrow, this.enemies_pig, (arrow, enemy) => {
-                    enemy.getHit(3);
-                    arrow.destroy();
-                });
-
-                this.physics.add.collider(arrow, this.platforms, (arrow, platform) => {
-                    arrow.setVelocityX(0);
-                    this.time.delayedCall(10000, () => {
+                if (this.arrows > 0) {
+                    this.arrows--;
+                    this.arrowCooldown = true;
+                    const arrow = this.physics.add.image(this.main_character.x + this.weaponX, this.main_character.y + 20, 'arrow').setScale(3);
+                    arrow.setVelocityX(this.main_character.flipX ? -500 : 500);
+                    arrow.flipX = this.main_character.flipX;
+                    arrow.body.allowGravity = false;
+                    this.physics.add.collider(arrow, this.enemies_pig, (arrow, enemy) => {
+                        enemy.getHit(3);
                         arrow.destroy();
-                    }, null, null);
-                });
+                    });
 
-                this.time.delayedCall(2000, () => {
-                    this.arrowCooldown = false;
-                }, null, null);
+                    this.physics.add.collider(arrow, this.platforms, (arrow, platform) => {
+                        arrow.setVelocityX(0);
+                        this.time.delayedCall(10000, () => {
+                            arrow.destroy();
+                        }, null, null);
+                    });
+
+                    this.time.delayedCall(2000, () => {
+                        this.arrowCooldown = false;
+                    }, null, null);
+
+                    if(this.arrows == 0) {
+                        this.arco.setTexture('arco_vacio');
+                    }
+
+                    return;
+                }
+
+
             }
 
             changeWeapon(weapon) {
