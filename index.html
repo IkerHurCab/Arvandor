@@ -33,6 +33,7 @@
 
             constructor() {
                 super('Arvandor');
+                this.weaponIndex = 0;
                 this.weapon = 'sword';
                 this.weaponX = 0;
                 this.rocabroteText = 'Buenas, viajero. ¿Qué te trae por aquí?';
@@ -56,6 +57,7 @@
                 this.isDefending = false;
                 this.arrows = 10;
                 this.arrowCooldown = false;
+                this.weapons = [['espada', 'sword']];
             }
             preload() {
                 this.load.image('exclamation', 'images/exclamation.png');
@@ -99,8 +101,12 @@
                 this.load.image('single_brick', 'images/textures/single_brick.png');
                 this.load.image('single_wood', 'images/textures/single_wood.png');
 
-                //armas
+                //gadgets
                 this.load.image('gancho', 'images/gadgets/grappling_hook.png');
+                this.load.image('gancho_disparado', 'images/gadgets/grappling_hook_shot.png');
+                this.load.image('garfio_gancho', 'images/gadgets/grappling_hook_proyectile.png');
+
+                //armas
                 this.load.image('espada', 'images/weapons/sword.png');
                 this.load.image('escudo', 'images/weapons/shield.png');
                 this.load.image('lanza', 'images/weapons/spear.png');
@@ -109,6 +115,14 @@
 
                 //items
                 this.load.image('arrow', 'images/items/arrow.png');
+
+                //hud
+                this.load.image('espada_hud', 'images/hud/sword_hud.png');
+                this.load.image('escudo_hud', 'images/hud/shield_hud.png');
+                this.load.image('lanza_hud', 'images/hud/spear_hud.png');
+                this.load.image('arco_hud', 'images/hud/bow_hud.png');
+                this.load.image('arco_vacio_hud', 'images/hud/empty_bow_hud.png');
+                this.load.image('gancho_hud', 'images/hud/grappling_hook_hud.png');
             }
 
             createAnimations() {
@@ -286,10 +300,6 @@
                 Utils.rectangle(this, 'single_platform', 130, 34, 1, 1);
                 Utils.rectangle(this, 'single_platform', 135, 36, 1, 1);
                 Utils.rectangle(this, 'single_platform', 140, 38, 1, 1);
-
-
-
-
             }
 
 
@@ -323,10 +333,9 @@
                 this.arco.setDepth(1);
                 this.arco.body.setAllowGravity(false);
                 this.arco.setImmovable(true);
-
                 this.currentWeapon = this.espada;
-                this.weapon = 'sword';
-                this.currentWeapon.setVisible(true);
+                this.changeWeapon('espada', 'sword');
+                this.changeWeapon('espada', 'sword');
 
 
             }
@@ -465,9 +474,9 @@
                         }
                         break;
                     case 'shield':
-
                         this.isDefending = this.input.activePointer.isDown;
                         if (this.isDefending) {
+                            this.main_character.setVelocityX(0);
                             this.weaponX = this.main_character.flipX ? -40 : 40;
                             this.currentWeapon.setScale(2.5);
                         }
@@ -509,6 +518,108 @@
                             this.throwArrow();
                         }
                         break;
+
+                    case 'grappling_hook':
+                        this.isAttacking = this.input.activePointer.isDown;
+                        if (this.isAttacking) {
+                            this.grapplingHook();
+                        }
+                        break;
+                }
+            }
+
+            grapplingHook() {
+                if (!this.ganchoShot) {
+
+                    this.main_character.body.allowGravity = false;
+                    this.main_character.setVelocityX(0);
+                    this.main_character.setVelocityY(0);
+
+                    this.inAction = true;
+
+                    this.ganchoShot = true;
+                    this.gancho.setTexture('gancho_disparado');
+                    const grapplingHookProjectile = this.physics.add.image(this.main_character.x + this.weaponX, this.main_character.y + 17, 'garfio_gancho').setScale(2);
+                    grapplingHookProjectile.setVelocityX(this.main_character.flipX ? -1000 : 1000);
+                    grapplingHookProjectile.flipX = this.main_character.flipX;
+                    grapplingHookProjectile.body.allowGravity = false;
+
+                    const line = this.add.graphics();
+                    line.lineStyle(2, 0x000000, 1);
+                    line.moveTo(this.currentWeapon.x, this.currentWeapon.y);
+                    line.lineTo(grapplingHookProjectile.x, grapplingHookProjectile.y);
+                    line.strokePath();
+
+                    const tweenConfig = {
+                        targets: grapplingHookProjectile,
+                        x: this.currentWeapon.x,
+                        y: this.currentWeapon.y,
+                        duration: 350,
+                        onComplete: () => {
+                            line.destroy();
+                            grapplingHookProjectile.destroy();
+                            this.gancho.setTexture('gancho');
+                            this.grapplingHookHit = false;
+                            this.inAction = false;
+                            this.main_character.body.allowGravity = true;
+                            this.ganchoShot = false;
+                        }
+                    };
+
+                    this.time.addEvent({
+                        delay: 10,
+                        callback: () => {
+                            line.clear();
+                            line.lineStyle(2, 0x000000, 1);
+                            line.moveTo(this.currentWeapon.x, this.currentWeapon.y - 3);
+                            line.lineTo(grapplingHookProjectile.x, grapplingHookProjectile.y);
+                            line.strokePath();
+                        },
+                        loop: true
+                    });
+
+                    this.main_character.body.allowGravity = false;
+
+                    this.physics.add.collider(grapplingHookProjectile, this.enemies_pig, (projectile, enemy) => {
+                        this.tweens.add(tweenConfig);
+                        enemy.getHit(1);
+                    }, null, this);
+
+                    this.physics.add.collider(grapplingHookProjectile, this.platforms, (projectile, platform) => {
+                        this.grapplingHookHit = true;
+                        if (platform.texture.key != 'single_wood') {
+                            this.tweens.add(tweenConfig);
+                            return;
+                        }
+                        const velocity = this.main_character.flipX ? -1000 : 1000;
+                        this.main_character.setVelocityX(velocity);
+
+
+                        if (this.main_character.flipX) {
+                            this.main_character.setAngle(-90);
+                        } else {
+                            this.main_character.setAngle(90);
+                        }
+
+                        projectile.setVelocityX(0);
+                        this.time.delayedCall(500, () => {
+                            this.main_character.body.allowGravity = true;
+                            this.inAction = false;
+                            this.main_character.setAngle(0);
+                            projectile.destroy();
+                            line.destroy();
+                            this.ganchoShot = false;
+                            this.gancho.setTexture('gancho');
+                            this.grapplingHookHit = false;
+                        }, null, this);
+
+                    });
+
+                    this.time.delayedCall(500, () => {
+                        if (!this.grapplingHookHit) {
+                            this.tweens.add(tweenConfig);
+                        }
+                    }, null, this);
                 }
             }
 
@@ -536,8 +647,9 @@
                         this.arrowCooldown = false;
                     }, null, null);
 
-                    if(this.arrows == 0) {
+                    if (this.arrows == 0) {
                         this.arco.setTexture('arco_vacio');
+                        this.weaponIcon.setTexture('arco_vacio_hud');
                     }
 
                     return;
@@ -546,12 +658,38 @@
 
             }
 
-            changeWeapon(weapon) {
+            changeWeapon(weapon, weaponName) {
                 this.currentWeapon.setVisible(false);
                 this.currentWeapon = this[weapon];
+                this.currentWeapon.flipX = this.main_character.flipX;
                 this.currentWeapon.setVisible(true);
+                this.weapon = weaponName;
+
+                if (this.weaponIcon) {
+                    this.weaponIcon.destroy();
+                }
+                const weaponIcon = this.add.image(window.innerWidth - 75, 75, weapon + '_hud').setScale(6).setOrigin(0.5, 0.5);
+                weaponIcon.setScrollFactor(0);
+                this.weaponIcon = weaponIcon;
+
+                if (this.weapon == 'bow' && this.arrows > 0) {
+                    this.arco.setTexture('arco');
+                    this.weaponIcon.setTexture('arco_hud');
+                }
+
+                else if (this.weapon === 'bow' && this.arrows <= 0) {
+                    this.arco.setTexture('arco_vacio');
+                    this.weaponIcon.setTexture('arco_vacio_hud');
+                }
             }
 
+            switchWeapon(index) {
+                index += 1;
+                if (index > 0 && index <= this.weapons.length) {
+                    this.weaponIndex = index;
+                    this.changeWeapon(this.weapons[index - 1][0], this.weapons[index - 1][1]);
+                }
+            }
 
             create() {
                 this.createScenario();
@@ -682,7 +820,6 @@
 
 
             enableDragAndDrop() {
-
                 if (this.optionTexts) {
                     this.optionTexts.forEach(optionText => {
                         optionText.removeAllListeners();
@@ -690,9 +827,11 @@
                     });
                 }
 
-
+                this.input.off('drop');
+                this.input.off('drag');
+                this.input.off('dragstart');
+                this.input.off('dragend');
                 this.optionTexts = [];
-
                 this.options.forEach((opt, idx) => {
                     const optionText = this.add.text(
                         this.cameras.main.scrollX + (window.innerWidth / (this.options.length + 1)) * (idx + 1),
@@ -847,26 +986,41 @@
                         case '¿Tienes algo para mí?':
                             this.rocabroteText = 'A juzgar por tu mirada, necesitas algo más que una espada. Adelante, te doy a elegir.';
                             this.options = ['Lanza', 'Escudo', 'Arco'];
+
+                            if (this.coinCount >= 10) {
+                                this.options.push('Gancho (10 monedas)');
+                            }
                             break;
                         case 'Lanza':
                             this.rocabroteText = 'Con esta lanza podrás atacar a tus enemigos con mayor alcance. Buena elección.';
                             this.options = ['Gracias', 'Adiós'];
-                            this.changeWeapon('lanza');
-                            this.weapon = 'spear';
+                            this.weapons.push(['lanza', 'spear']);
+                            this.changeWeapon('lanza', 'spear');
+                            console.log(this.weapons);
 
                             break;
                         case 'Escudo':
                             this.rocabroteText = 'Con este escudo podrás protegerte de los ataques enemigos. Te irá bien en tu viaje.';
                             this.options = ['Gracias', 'Adiós'];
-                            this.changeWeapon('escudo');
-                            this.weapon = 'shield';
+                            this.weapons.push(['escudo', 'shield']);
+                            this.changeWeapon('escudo', 'shield');
 
                             break;
                         case 'Arco':
                             this.rocabroteText = 'Con este arco podrás atacar a tus enemigos desde la distancia. Buena elección.';
                             this.options = ['Gracias', 'Adiós'];
-                            this.changeWeapon('arco');
-                            this.weapon = 'bow';
+                            this.weapons.push(['arco', 'bow']);
+                            this.changeWeapon('arco', 'bow');
+
+
+                            break;
+
+                        case 'Gancho (10 monedas)':
+                            this.rocabroteText = 'Con este gancho podrás llegar a lugares inaccesibles. Buena elección.';
+                            this.coinCount -= 10;
+                            this.options = ['Gracias', 'Adiós'];
+                            this.weapons.push(['gancho', 'grappling_hook']);
+                            this.changeWeapon('gancho', 'grappling_hook');
 
                             break;
                         case 'Gracias':
@@ -908,32 +1062,34 @@
                         case 'Mini lanza':
                             this.rocabroteText = '¡Aquí tienes tu mini lanza! ¡Que te sea útil!';
                             this.options = ['Gracias', 'Adiós'];
-                            this.changeWeapon('idle_mini_spear_anim');
-                            this.weapon = 'mini_spear';
+                            this.weapons.push(['mini_lanza', 'mini_spear']);
+                            this.changeWeapon('mini_lanza', 'mini_spear');
+
 
                             break;
 
                         case 'Mini arco':
                             this.rocabroteText = '¡Aquí tienes tu mini arco! ¡Que te sea útil!';
                             this.options = ['Gracias', 'Adiós'];
-                            this.changeWeapon('bow_anim');
-                            this.weapon = 'bow';
+                            this.weapons.push(['mini_arco', 'mini_bow']);
+                            this.changeWeapon('mini_arco', 'mini_bow');
+
 
                             break;
 
                         case 'Mini escudo':
                             this.rocabroteText = '¡Aquí tienes tu mini escudo! ¡Que te sea útil!';
                             this.options = ['Esto no es Fortnite', '¿Gracias?'];
-                            this.changeWeapon('idle_mini_shield_anim');
-                            this.weapon = 'mini_shield';
+                            this.weapons.push(['mini_escudo', 'mini_shield']);
+                            this.changeWeapon('mini_escudo', 'mini_shield');
 
                             break;
 
                         case '¿Puedes encoger mi espada?':
                             this.rocabroteText = '¡Pues claro! De lo contrario, el creador del juego no habría puesto esta opción.';
                             this.options = ['Gracias', 'Adiós'];
-                            this.changeWeapon('idle_mini_sword_anim');
-                            this.weapon = 'mini_sword';
+                            this.weapons.push(['mini_espada', 'mini_sword']);
+                            this.changeWeapon('mini_espada', 'mini_sword');
                             break;
 
                         case 'Esto no es Fortnite':
@@ -954,6 +1110,9 @@
                         case 'Prefiero otro arma':
                             this.rocabroteText = 'Sin problema. ¿Qué prefieres?';
                             this.options = ['Lanza', 'Escudo', 'Arco', 'Con mi espada será suficiente'];
+                            if (this.coinCount >= 10) {
+                                this.options.push('Gancho (10 monedas)');
+                            }
                             break;
 
                         case 'Con mi espada será suficiente':
@@ -970,6 +1129,7 @@
 
                     this.rocabroteTextBox.setText(this.rocabroteText);
                     dropZone.destroy();
+                    console.log('hola');
                     this.enableDragAndDrop();
 
                 });
@@ -1006,13 +1166,15 @@
             }
 
             stopCharacter() {
-                this.main_character.setVelocityX(0);
-                if (this.isMoving) {
-                    this.isMoving = false;
-                }
+                if (!this.inAction) {
+                    this.main_character.setVelocityX(0);
+                    if (this.isMoving) {
+                        this.isMoving = false;
+                    }
 
-                if (!this.inAir && this.main_character.anims.currentAnim.key !== 'idle_anim') {
-                    this.main_character.play('idle_anim');
+                    if (!this.inAir && this.main_character.anims.currentAnim.key !== 'idle_anim') {
+                        this.main_character.play('idle_anim');
+                    }
                 }
             }
 
@@ -1063,9 +1225,7 @@
             }
 
             update() {
-
                 this.updateState();
-
                 if ((this.cursors.left.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A).isDown) && !this.inAction) {
                     this.run('left');
                 } else if ((this.cursors.right.isDown || this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D).isDown) && !this.inAction) {
@@ -1093,7 +1253,17 @@
                     }
                 }
 
-                this.controlWeaponState()
+                if (!this.inAction) {
+                    this.controlWeaponState();
+                }
+
+                this.input.keyboard.on('keydown', (event) => {
+                    const key = event.key;
+                    if (key >= '1' && key <= `${this.weapons.length}` && !this.inAction) {
+                        const weaponIndex = parseInt(key) - 1;
+                        this.switchWeapon(weaponIndex);
+                    }
+                });
 
 
                 this.hideExclamation();
