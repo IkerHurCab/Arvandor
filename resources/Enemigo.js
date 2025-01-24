@@ -60,7 +60,7 @@ class Enemigo extends Phaser.Physics.Arcade.Sprite {
                     }
                 });
 
-                this.scene.time.delayedCall(2000, () => {
+                this.scene.time.delayedCall(1600, () => {
                     this.invincible = false;
                     this.setVisible(true);
                 }, [], this);

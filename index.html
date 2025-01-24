@@ -54,6 +54,8 @@
                 this.currentWeapon;
                 this.weaponOverlap = null;
                 this.isDefending = false;
+                this.arrows = 10;
+                this.arrowCooldown = false;
             }
             preload() {
                 this.load.image('exclamation', 'images/exclamation.png');
@@ -321,8 +323,8 @@
                 this.arco.body.setAllowGravity(false);
                 this.arco.setImmovable(true);
 
-                this.currentWeapon = this.arco;
-                this.weapon = 'bow';
+                this.currentWeapon = this.espada;
+                this.weapon = 'sword';
                 this.currentWeapon.setVisible(true);
 
 
@@ -371,7 +373,6 @@
                 }).setOrigin(0, 0.25);
 
                 coinText.setScrollFactor(0);
-
                 this.coinText = coinText;
 
                 this.coins.forEach(coin => {
@@ -503,21 +504,34 @@
                         break;
                     case 'bow':
                         this.isAttacking = this.input.activePointer.isDown;
-                        if (this.isAttacking) {
+                        if (this.isAttacking && !this.arrowCooldown) {
                             this.throwArrow();
                         }
                         break;
                 }
             }
 
-            throwArrow(){
+            throwArrow() {
+                this.arrowCooldown = true;
                 const arrow = this.physics.add.image(this.main_character.x + this.weaponX, this.main_character.y + 20, 'arrow').setScale(3);
                 arrow.setVelocityX(this.main_character.flipX ? -500 : 500);
+                arrow.flipX = this.main_character.flipX;
                 arrow.body.allowGravity = false;
                 this.physics.add.collider(arrow, this.enemies_pig, (arrow, enemy) => {
-                    enemy.getHit(1);
+                    enemy.getHit(3);
                     arrow.destroy();
                 });
+
+                this.physics.add.collider(arrow, this.platforms, (arrow, platform) => {
+                    arrow.setVelocityX(0);
+                    this.time.delayedCall(10000, () => {
+                        arrow.destroy();
+                    }, null, null);
+                });
+
+                this.time.delayedCall(2000, () => {
+                    this.arrowCooldown = false;
+                }, null, null);
             }
 
             changeWeapon(weapon) {
