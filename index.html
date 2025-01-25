@@ -81,7 +81,8 @@
                 this.load.spritesheet('shield_running', 'images/main_character/shield_running.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('idle_mini_shield', 'images/main_character/idle_mini_shield.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('sword_attack_anim', 'images/main_character/sword_attack_anim.png', { frameWidth: 40, frameHeight: 32 });
-                this.load.spritesheet('enemy_pig', 'images/enemy_pig.png', { frameWidth: 18, frameHeight: 18 });
+                this.load.spritesheet('enemy_pig', 'images/enemies/enemy_pig.png', { frameWidth: 18, frameHeight: 18 });
+                this.load.spritesheet('enemy_carrot', 'images/enemies/enemy_carrot.png', { frameWidth: 36, frameHeight: 36 });
                 this.load.spritesheet('coin', 'images/miscellaneous/coin.png', { frameWidth: 18, frameHeight: 18 });
 
                 this.load.spritesheet('single_lava_top', 'images/textures/single_lava.png', { frameWidth: 18, frameHeight: 18 });
@@ -250,6 +251,7 @@
                 Utils.rectangle(this, 'single_brick', -24, 5, 3, 7);
                 Utils.rectangle(this, 'single_brick', -20, 2, 2, 3);
                 Utils.rectangle(this, 'single_brick', -24, 2, 2, 3);
+
                 //generación de todo el mapa
                 Utils.staircase(this, 'single_platform', 3, 1, 5, 1, false);
                 this.lavaGroup = this.physics.add.staticGroup();
@@ -368,8 +370,9 @@
                 this.main_character.setDepth(1);
 
                 this.enemies_pig = [];
+                this.enemies_carrot = [];
                 this.coins = [];
-                EnemyUtils.pig(this, 500 + 54 * 18, window.innerHeight - 54);
+                EnemyUtils.carrot(this, 500 + 54 * 18, window.innerHeight - 54 * 2);
                 EnemyUtils.pig(this, 500 + 54 * 56, window.innerHeight - 54);
 
 
@@ -587,7 +590,7 @@
 
                     this.physics.add.collider(grapplingHookProjectile, this.platforms, (projectile, platform) => {
                         this.grapplingHookHit = true;
-                        if (platform.texture.key != 'single_wood') {
+                        if (platform.texture.key != 'single_platform') {
                             this.tweens.add(tweenConfig);
                             return;
                         }

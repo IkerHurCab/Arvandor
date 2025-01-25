@@ -18,11 +18,17 @@ class Enemigo extends Phaser.Physics.Arcade.Sprite {
             frameRate: 3,
             repeat: -1
         });
+
+        this.anims.create({
+            key: 'enemy_carrot',
+            frames: this.anims.generateFrameNumbers('enemy_carrot', { start: 0, end: 1 }),
+            frameRate: 2,
+            repeat: -1
+        });
     }
 
     create() {
         this.createAnimations();
-
     }
 
     getHit(damage) {

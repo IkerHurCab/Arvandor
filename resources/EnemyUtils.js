@@ -25,6 +25,30 @@ class EnemyUtils {
         });
     }
 
+    static carrot(scene, x, y) {
+        const enemy = new Enemigo(scene, x, y, 'enemy_carrot', 50, 1);
+        enemy.create();
+        enemy.play('enemy_carrot');
+        enemy.setScale(4);
+
+        scene.enemies_carrot.push(enemy);
+        scene.platforms.forEach(platform => {
+            scene.physics.add.collider(enemy, platform);
+        });
+
+        scene.physics.add.collider(scene.main_character, enemy, (main_character, enemyCarrot) => {
+            if (main_character.y < enemyCarrot.y - 60 && !enemyCarrot.invincible) {
+                main_character.setVelocityY(-scene.speed);
+                enemyCarrot.getHit(1);
+            } else if (main_character.y < enemyCarrot.y - 20 && enemyCarrot.invincible) {
+                main_character.setVelocityY(-scene.speed);
+            }
+            else if (!scene.invincible && !scene.isDefending) {
+                scene.loseLife(1);
+            }
+        });
+    }
+
 
 }
 
