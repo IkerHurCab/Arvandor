@@ -23,17 +23,43 @@ class EnemyUtils {
                 scene.loseLife(1);
             }
         });
+
+        enemy.update = function() {
+            if (!this.body) return;
+            if (this.body.blocked.left || this.body.touching.left) {
+            this.setVelocityX(this.speed);
+            this.flipX = false;
+            } else if (this.body.blocked.right || this.body.touching.right) {
+            this.setVelocityX(-this.speed);
+            this.flipX = true;
+            }
+        };
+
+        scene.events.on('update', enemy.update, enemy);
     }
 
     static carrot(scene, x, y) {
-        const enemy = new Enemigo(scene, x, y, 'enemy_carrot', 50, 1);
+        const enemy = new Enemigo(scene, x, y, 'enemy_carrot', 0, 3);
+        enemy.body.setAllowGravity(false); 
+        enemy.body.setImmovable(true);
+
+
         enemy.create();
         enemy.play('enemy_carrot');
         enemy.setScale(4);
-
-        scene.enemies_carrot.push(enemy);
+        
+    
         scene.platforms.forEach(platform => {
             scene.physics.add.collider(enemy, platform);
+        });
+
+        scene.tweens.add({
+            targets: enemy,
+            y: y - 250,
+            duration: 1250,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
         });
 
         scene.physics.add.collider(scene.main_character, enemy, (main_character, enemyCarrot) => {
@@ -47,6 +73,8 @@ class EnemyUtils {
                 scene.loseLife(1);
             }
         });
+
+        scene.enemies_carrot.push(enemy);
     }
 
 

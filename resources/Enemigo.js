@@ -75,14 +75,7 @@ class Enemigo extends Phaser.Physics.Arcade.Sprite {
     }
 
     update() {
-        if (!this.body) return;
-        if (this.body.blocked.left || this.body.touching.left) {
-            this.setVelocityX(this.speed);
-            this.flipX = false;
-        } else if (this.body.blocked.right || this.body.touching.right) {
-            this.setVelocityX(-this.speed);
-            this.flipX = true;
-        }
+  
     }
 }
 

@@ -337,7 +337,6 @@
                 this.arco.setImmovable(true);
                 this.currentWeapon = this.espada;
                 this.changeWeapon('espada', 'sword');
-                this.changeWeapon('espada', 'sword');
 
 
             }
@@ -498,6 +497,16 @@
                             this.weaponOverlap = this.physics.add.overlap(
                                 this.currentWeapon,
                                 this.enemies_pig,
+                                (weapon, enemy) => {
+                                    enemy.getHit(1);
+                                },
+                                null,
+                                this
+                            );
+
+                            this.weaponOverlap = this.physics.add.overlap(
+                                this.currentWeapon,
+                                this.enemies_carrot,
                                 (weapon, enemy) => {
                                     enemy.getHit(1);
                                 },
