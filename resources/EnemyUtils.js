@@ -74,6 +74,42 @@ class EnemyUtils {
             }
         });
 
+        enemy.update = function() {
+            if (!this.body) return;
+            const distance = Phaser.Math.Distance.Between(this.x, this.y, scene.main_character.x, scene.main_character.y);
+            if (distance < 500) {
+                this.shootAtPlayer();
+            }
+        };
+
+        enemy.shootAtPlayer = function() {
+            
+            if (!this.lastShotTime || scene.time.now - this.lastShotTime > 1000) {
+                this.lastShotTime = scene.time.now;
+
+                const bullet = scene.physics.add.sprite(this.x, this.y, 'carrot').setScale(3);
+                bullet.body.allowGravity = false;
+                scene.physics.moveToObject(bullet, scene.main_character, 300);
+                scene.physics.add.collider(scene.main_character, bullet, () => {
+                    if (!scene.invincible && !scene.isDefending) {
+                        scene.loseLife(1);
+                        
+                    }
+                    bullet.destroy();
+                });
+
+                scene.physics.add.collider(bullet, scene.platforms, () => {
+                    bullet.destroy();
+                });
+
+                scene.time.delayedCall(10000, () => {
+                    bullet.destroy();
+                });
+            }
+        };
+
+        scene.events.on('update', enemy.update, enemy);
+
         scene.enemies_carrot.push(enemy);
     }
 

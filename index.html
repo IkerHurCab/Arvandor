@@ -29,6 +29,7 @@
         import Utils from './resources/Utils.js';
         import EnemyUtils from './resources/EnemyUtils.js';
         import Moneda from './resources/Moneda.js';
+        import Sign from './resources/Sign.js';
         class Arvandor extends Phaser.Scene {
 
             constructor() {
@@ -124,6 +125,12 @@
                 this.load.image('arco_hud', 'images/hud/bow_hud.png');
                 this.load.image('arco_vacio_hud', 'images/hud/empty_bow_hud.png');
                 this.load.image('gancho_hud', 'images/hud/grappling_hook_hud.png');
+                this.load.image('gancho_disparado_hud', 'images/hud/grappling_hook_shot_hud.png');
+                this.load.image('arrow_hud', 'images/hud/arrow_hud.png');
+
+                //misc
+                this.load.image('carrot', 'images/miscellaneous/carrot.png');
+                this.load.image('sign', 'images/miscellaneous/sign.png');
             }
 
             createAnimations() {
@@ -253,6 +260,7 @@
                 Utils.rectangle(this, 'single_brick', -24, 2, 2, 3);
 
                 //generación de todo el mapa
+
                 Utils.staircase(this, 'single_platform', 3, 1, 5, 1, false);
                 this.lavaGroup = this.physics.add.staticGroup();
                 Utils.lava(this, 8, -9, 10, 3);
@@ -302,6 +310,9 @@
                 Utils.rectangle(this, 'single_platform', 130, 34, 1, 1);
                 Utils.rectangle(this, 'single_platform', 135, 36, 1, 1);
                 Utils.rectangle(this, 'single_platform', 140, 38, 1, 1);
+                Utils.grass(this, 96, -22, 20, 20);
+                Utils.grass(this, 130, -22, 20, 20);
+                Utils.rectangle(this, 'single_platform', 131, -1, 2, 1);
             }
 
 
@@ -371,11 +382,14 @@
                 this.enemies_pig = [];
                 this.enemies_carrot = [];
                 this.coins = [];
-                EnemyUtils.carrot(this, 500 + 54 * 18, window.innerHeight - 54 * 2);
+                EnemyUtils.pig(this, 500 + 54 * 18, window.innerHeight - 54);
                 EnemyUtils.pig(this, 500 + 54 * 56, window.innerHeight - 54);
+                EnemyUtils.pig(this, 500 + 54 * 64, window.innerHeight - 54);
+                EnemyUtils.carrot(this, 500 + 54 * 37, window.innerHeight + 54);
+                EnemyUtils.pig(this, 500 + 54 * 70, window.innerHeight - 54);
 
 
-                const coinIcon = this.add.image(30, 70, 'coin', 0).setScale(2).setOrigin(0.5, 0.5);
+                const coinIcon = this.add.image(30, 70, 'coin', 0).setScale(2).setOrigin(0.5, 0.5).setDepth(1);
                 coinIcon.setScrollFactor(0);
 
                 const coinText = this.add.text(60, 60, `x${this.coinCount}`, {
@@ -386,6 +400,18 @@
 
                 coinText.setScrollFactor(0);
                 this.coinText = coinText;
+
+                const arrowIcon = this.add.image(30, 115, 'arrow_hud').setScale(3).setOrigin(0.5, 0.5);
+                arrowIcon.setScrollFactor(0);
+
+                const arrowText = this.add.text(60, 110, `x${this.arrows}`, {
+                    fontSize: '24px',
+                    fontFamily: '"Press Start 2P"',
+                    fill: '#ffffff'
+                }).setOrigin(0, 0.25);
+
+                arrowText.setScrollFactor(0);
+                this.arrowText = arrowText;
 
                 this.coins.forEach(coin => {
                     coin.body.setAllowGravity(false);
@@ -399,7 +425,7 @@
                 });
 
 
-
+                Moneda.moneda(this, 9, 2);
                 Moneda.moneda(this, 15, 7);
                 Moneda.moneda(this, 16, 7);
                 Moneda.moneda(this, 20, 9);
@@ -410,6 +436,7 @@
                 Moneda.moneda(this, 40, 7);
                 Moneda.moneda(this, 41, 7);
                 Moneda.moneda(this, 42, 7);
+               
 
             }
 
@@ -638,12 +665,18 @@
             throwArrow() {
                 if (this.arrows > 0) {
                     this.arrows--;
+                    this.arrowText.setText(`x${this.arrows}`);
                     this.arrowCooldown = true;
                     const arrow = this.physics.add.image(this.main_character.x + this.weaponX, this.main_character.y + 20, 'arrow').setScale(3);
                     arrow.setVelocityX(this.main_character.flipX ? -500 : 500);
                     arrow.flipX = this.main_character.flipX;
                     arrow.body.allowGravity = false;
                     this.physics.add.collider(arrow, this.enemies_pig, (arrow, enemy) => {
+                        enemy.getHit(3);
+                        arrow.destroy();
+                    });
+
+                    this.physics.add.collider(arrow, this.enemies_carrot, (arrow, enemy) => {
                         enemy.getHit(3);
                         arrow.destroy();
                     });
