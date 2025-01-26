@@ -30,6 +30,7 @@
         import EnemyUtils from './resources/EnemyUtils.js';
         import Moneda from './resources/Moneda.js';
         import Sign from './resources/Sign.js';
+        import Bomba from './resources/Bomba.js';
         class Arvandor extends Phaser.Scene {
 
             constructor() {
@@ -58,7 +59,10 @@
                 this.isDefending = false;
                 this.arrows = 10;
                 this.arrowCooldown = false;
+                this.following = true;
                 this.weapons = [['espada', 'sword']];
+                this.bombs = 3;
+                this.platformCreated = false;
             }
             preload() {
                 this.load.image('exclamation', 'images/exclamation.png');
@@ -74,7 +78,7 @@
                 this.load.spritesheet('idle_mini_spear', 'images/main_character/idle_mini_spear.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('idle_bow', 'images/main_character/idle_bow.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('idle_shield', 'images/main_character/idle_shield.png', { frameWidth: 32, frameHeight: 32 });
-                this.load.image('heart', 'images/heart.png');
+                this.load.image('heart', 'images/items/heart.png');
                 this.load.spritesheet('running', 'images/main_character/running.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('jumping', 'images/main_character/jumping.png', { frameWidth: 32, frameHeight: 32 });
                 this.load.spritesheet('spear_running', 'images/main_character/spear_running.png', { frameWidth: 50, frameHeight: 32 });
@@ -100,6 +104,7 @@
                 this.load.image('single_dirt_right', 'images/textures/single_dirt_right.png');
 
                 this.load.image('single_stone', 'images/textures/single_stone.png');
+                this.load.image('single_cracked_stone', 'images/textures/single_cracked_stone.png');
                 this.load.image('single_brick', 'images/textures/single_brick.png');
                 this.load.image('single_wood', 'images/textures/single_wood.png');
 
@@ -117,6 +122,7 @@
 
                 //items
                 this.load.image('arrow', 'images/items/arrow.png');
+                this.load.spritesheet('bomb', 'images/items/bomb.png', { frameWidth: 18, frameHeight: 18 });
 
                 //hud
                 this.load.image('espada_hud', 'images/hud/sword_hud.png');
@@ -127,6 +133,7 @@
                 this.load.image('gancho_hud', 'images/hud/grappling_hook_hud.png');
                 this.load.image('gancho_disparado_hud', 'images/hud/grappling_hook_shot_hud.png');
                 this.load.image('arrow_hud', 'images/hud/arrow_hud.png');
+                this.load.image('bomb_hud', 'images/hud/bomb_hud.png');
 
                 //misc
                 this.load.image('carrot', 'images/miscellaneous/carrot.png');
@@ -311,8 +318,19 @@
                 Utils.rectangle(this, 'single_platform', 135, 36, 1, 1);
                 Utils.rectangle(this, 'single_platform', 140, 38, 1, 1);
                 Utils.grass(this, 96, -22, 20, 20);
-                Utils.grass(this, 130, -22, 20, 20);
+                Utils.grass(this, 130, -22, 20, 60);
                 Utils.rectangle(this, 'single_platform', 131, -1, 2, 1);
+                Utils.rectangle(this, 'single_platform', 114, -1, 2, 1);
+                Utils.rectangle(this, 'single_cracked_stone', 142, 0, 3, 1);
+                Utils.rectangle(this, 'single_stone', 142, 1, 1, 1);
+                Utils.grass(this, 142, 1, 3, 2);
+                Utils.grass(this, 143, 2, 6, 3);
+                Utils.grass(this, 146, 3, 6, 7);
+                Utils.grass(this, 153, 2, 6, 3);
+                Utils.grass(this, 156, 1, 3, 2);
+
+
+
             }
 
 
@@ -356,7 +374,7 @@
                 const exclamation = this.add.sprite(0, 0, 'exclamation').setVisible(false);
                 this.exclamation = exclamation;
 
-                const main_character = this.physics.add.sprite(500, window.innerHeight - 100, 'idle');
+                const main_character = this.physics.add.sprite(500 + 54 * 135, window.innerHeight - 100, 'idle');
                 const rocabrote = this.physics.add.sprite(500 + 54 * 26, window.innerHeight - 54 * 20, 'rocabrote');
 
                 main_character.setScale(2.5);
@@ -413,6 +431,18 @@
                 arrowText.setScrollFactor(0);
                 this.arrowText = arrowText;
 
+                const bombIcon = this.add.image(30, 170, 'bomb_hud').setScale(3).setOrigin(0.5, 0.5).setDepth(1);
+                bombIcon.setScrollFactor(0);
+
+                const bombText = this.add.text(60, 165, `x${this.bombs}`, {
+                    fontSize: '24px',
+                    fontFamily: '"Press Start 2P"',
+                    fill: '#ffffff'
+                }).setOrigin(0, 0.25);
+
+                bombText.setScrollFactor(0);
+                this.bombText = bombText;
+
                 this.coins.forEach(coin => {
                     coin.body.setAllowGravity(false);
                     coin.body.setImmovable(true);
@@ -436,7 +466,7 @@
                 Moneda.moneda(this, 40, 7);
                 Moneda.moneda(this, 41, 7);
                 Moneda.moneda(this, 42, 7);
-               
+
 
             }
 
@@ -1298,6 +1328,10 @@
                     }
                 }
 
+                if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E))) {
+                    Bomba.throw(this);
+                }
+
                 if (!this.inAction) {
                     this.controlWeaponState();
                 }
@@ -1310,6 +1344,27 @@
                     }
                 });
 
+                if (Math.round((this.main_character.x - 500) / 54) > 158) {
+                    this.following = false;
+                    if (!this.platformCreated) {
+                        Utils.rectangle(this, 'single_platform', 157, 0, 3, 1);
+                        this.platformCreated = true;
+                        this.platforms.forEach(platform => {
+                            this.physics.add.collider(this.main_character, platform);
+                        });
+                        this.cameras.main.stopFollow();
+                        this.cameras.main.setScroll(500 + 158 * 54, window.innerHeight - 54 * 10);
+                    }
+
+
+                }
+
+                else {
+                    if (!this.following) {
+                        this.following = true;
+                        this.cameras.main.startFollow(this.main_character, true, 0.05, 0.05);
+                    }
+                }
 
                 this.hideExclamation();
 

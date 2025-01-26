@@ -29,9 +29,7 @@ class Sign extends Phaser.GameObjects.Sprite {
             align: 'center'
         }).setOrigin(0.5);
 
-        this.scene.time.delayedCall(3000, () => {
-            textBox.destroy();
-        });
+
     }
 }
 
